@@ -1,7 +1,8 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useReducer, useMemo, useRef, useEffect } from 'react';
 import { openDocument } from '../document';
 import MDX from '@mdx-js/runtime';
 import html2canvas from 'html2canvas';
+import useSlides from '../useSlides';
 
 export async function getServerSideProps(context) {
 	const doc = await openDocument(process.env.projectFile);
@@ -19,10 +20,9 @@ const Slide = ({ children }) => {
 	</div>
 }
 
-const Preview = ({ i, children }) => {
+const Preview = ({ children }) => {
 	const ref = useRef(null);
 	const refTarget = useRef(null);
-	//const [previewCanvas, setPreviewCanvas] = useState(null);
 
 	useEffect(() => {
 		if(
@@ -35,13 +35,13 @@ const Preview = ({ i, children }) => {
 				width: 1280 / 5,
 				height: 720 / 5,
 			}).then((canvas) => {
-				if(refTarget.current.hasChildNodes()) {
-					refTarget.current.removeChild(
+				if(refTarget.current?.hasChildNodes()) {
+					refTarget.current?.removeChild(
 						refTarget.current.children[0]
 					);
 				}
 
-				refTarget.current.appendChild(canvas);
+				refTarget.current?.appendChild(canvas);
 			});
 		}
 	}, [ref, refTarget])
@@ -52,22 +52,26 @@ const Preview = ({ i, children }) => {
 				<Slide>{children}</Slide>
 			</div>
 		</div>
-		<div style={{ border: '1px solid black', padding: '5px', margin: '5px' }} ref={refTarget}></div>
+		<div
+			style={{ border: '1px solid black', padding: '5px', margin: '5px' }}
+			ref={refTarget}
+		></div>
 	</div>;
 }
 
 const HomePage = ({ doc }) => {
-	console.log(doc);
-	const [ currentSlide, setSlide ] = useState(0);
-	//document.html2canvas = html2canvas;
+	const [ currentSlide, { next, prev, goto } ] = useSlides(doc);
+	//console.log(doc);
 
   return <div>
-		<div>Opening file { doc.filePath }</div>
 		<div style={{ display: 'flex', flexDirection: 'row' }}>
-			<div style={{ margin: '10px', padding: '10px', border: '1px solid black' }}>
+			<div style={{ margin: '10px', border: '1px solid black' }}>
 			{
 				doc.sections.map((section, i) => (
-					<div key={`section-${i}`}><Preview i={i}>{section.source}</Preview></div>
+					<div style={{ display: 'flex' }} key={`section-${i}`} onClick={() => goto(i)}>
+						<span>{i}</span>
+						<Preview>{section.source}</Preview>
+					</div>
 				))
 			}
 			</div>
@@ -76,9 +80,9 @@ const HomePage = ({ doc }) => {
 			</div>
 		</div>
 		<div>
-			<button onClick={() => setSlide((nr) => nr-1)}>Prev</button>
+			<button onClick={prev}>Prev</button>
 			<span>{currentSlide}</span>
-			<button onClick={() => setSlide((nr) => nr+1)}>Next</button>
+			<button onClick={next}>Next</button>
 		</div>
 	</div>;
 }
