@@ -1,0 +1,13 @@
+{
+	"name": "drawpresenter",
+	"scripts": {
+		"start": "./src/cli.js start"
+	},
+	"dependencies": {
+		"commander": "^9.4.1",
+		"next": "^13.0.4",
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0"
+	},
+	"packageManager": "yarn@3.3.0"
+}
