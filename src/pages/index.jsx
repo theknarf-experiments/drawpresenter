@@ -66,7 +66,7 @@ const HomePage = ({ doc }) => {
 
   return <div>
 		<div style={{ display: 'flex', flexDirection: 'row' }}>
-			<div style={{ margin: '10px', border: '1px solid black' }}>
+			<div style={{ margin: '10px', border: '1px solid black', overflow: 'scroll', height: '765px' }}>
 			{
 				doc.sections.map((section, i) => (
 					<div style={{ display: 'flex' }} key={`section-${i}`} onClick={() => goto(i)}>

@@ -20,3 +20,24 @@ test:
 ---
 
 # Test 1
+
+```bash
+$ git status
+$ git fetch origin
+```
+
+---
+
+# Test 2
+
+This is a paragraph with some text.
+
+How about it?
+
+---
+
+# Test 3
+
+---
+
+# Test 4
