@@ -8,40 +8,28 @@ const parse = (text, filePath) => {
 	//  - Parse the rest as MDX
 	
 	let sections = text.split(/-{3}(?:\r\n|\r|\n)/)
+	let frontmatter = false;
 
 	// Try to parse frontmatter either in section 0 or 1
 	if(sections[0] !== "") {
 		try {
-			const data = yaml.load(sections[0]);
-			sections[0] = {
-				source: sections[0],
-				frontmatter: true,
-				data,
-			};
+			frontmatter = yaml.load(sections[0]);
+			sections = sections.slice(1);
 		} catch(e) {
 			// If it's not yaml in a frontmatter then do nothign
 		}
 	} else if(sections[1] !== "") {
 		try {
-			const data = yaml.load(sections[1]);
-			sections[1] = {
-				source: sections[1],
-				frontmatter: true,
-				data,
-			};
+			frontmatter = yaml.load(sections[1]);
+			sections = sections.slice(2);
 		} catch(e) {
 			// If it's not yaml in a frontmatter then do nothign
 		}
 	}
 
 	sections = sections.map(section => {
-		if(typeof section == "string") {
-			return {
-				frontmatter: false,
-				source: section,
-			}
-		} else {
-			return section;
+		return {
+			source: section,
 		}
 	});
 
@@ -50,6 +38,7 @@ const parse = (text, filePath) => {
 	return {
 		filePath,
 		sections,
+		frontmatter,
 	}
 };
 
