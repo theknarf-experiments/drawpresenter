@@ -13,8 +13,8 @@ program
 	.command('start')
 	.argument('<file>', 'Markdown file uses for the presentation')
   .description('Start the application')
-  .action((directory, options) => {
-		start(directory, dev);
+  .action(async (file, options) => {
+		start(file, dev);
 	});
 
 program.parse();
