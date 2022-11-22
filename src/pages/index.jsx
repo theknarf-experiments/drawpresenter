@@ -3,6 +3,7 @@ import { openDocument } from '../document';
 import MDX from '@mdx-js/runtime';
 import html2canvas from 'html2canvas';
 import useSlides from '../useSlides';
+import { container } from '../app.css.ts';
 
 export async function getServerSideProps(context) {
 	const doc = await openDocument(process.env.projectFile);
@@ -79,7 +80,7 @@ const HomePage = ({ doc }) => {
 				<Slide>{doc.sections[currentSlide]?.source}</Slide>
 			</div>
 		</div>
-		<div>
+		<div className={container}>
 			<button onClick={prev}>Prev</button>
 			<span>{currentSlide}</span>
 			<button onClick={next}>Next</button>

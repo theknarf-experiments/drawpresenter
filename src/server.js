@@ -1,6 +1,8 @@
 const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
+const { createVanillaExtractPlugin } = require('@vanilla-extract/next-plugin');
+const withVanillaExtract = createVanillaExtractPlugin();
 
 const start = (projectFile, dev = false, hostname = 'localhost', port = 3000) => {
 	// when using middleware `hostname` and `port` must be provided below
@@ -9,7 +11,7 @@ const start = (projectFile, dev = false, hostname = 'localhost', port = 3000) =>
 		dir: __dirname,
 		hostname,
 		port,
-		conf: {
+		conf: withVanillaExtract({
 			env: {
 				projectFile
 			},
@@ -21,7 +23,7 @@ const start = (projectFile, dev = false, hostname = 'localhost', port = 3000) =>
 
 				return config;
 			},
-		},
+		}),
 	});
 	const handle = app.getRequestHandler();
 
