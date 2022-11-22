@@ -60,8 +60,30 @@ const Preview = ({ children }) => {
 	</div>;
 }
 
+const useKeybindings = (keybindings) => {
+	useEffect(() => {
+		const eventListener = (e) => {
+			if(typeof keybindings[e.key] == 'function')
+				keybindings[e.key](e);
+
+			if(typeof keybindings['all'] == 'function')
+				keybindings['all'](e);
+		};
+
+		document.addEventListener('keyup', eventListener);
+		return () => document.removeEventListener('keyup', eventListener);
+	}, []);
+}
+
 const HomePage = ({ doc }) => {
 	const [ currentSlide, { next, prev, goto } ] = useSlides(doc);
+	useKeybindings({
+		'ArrowDown': next,
+		'ArrowRight': next,
+		'ArrowUp': prev,
+		'ArrowLeft': prev,
+	});
+
 	//console.log(doc);
 
   return <div>
