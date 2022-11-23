@@ -22,8 +22,10 @@ test:
 # Test 1
 
 ```bash
-$ git status
-$ git fetch origin
+#!/bin/bash
+
+git status
+git fetch origin
 ```
 
 ---

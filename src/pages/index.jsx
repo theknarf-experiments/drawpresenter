@@ -4,6 +4,8 @@ import MDX from '@mdx-js/runtime';
 import html2canvas from 'html2canvas';
 import useSlides from '../useSlides';
 import { container } from '../app.css.ts';
+import SyntaxHighlighter from 'react-syntax-highlighter'
+import { agate } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 export async function getServerSideProps(context) {
 	const doc = await openDocument(process.env.projectFile);
@@ -15,9 +17,16 @@ export async function getServerSideProps(context) {
   }
 }
 
+const code = ({ className, ...props}) => {
+	const match = /language-(\w+)/.exec(className || '')
+	return match
+		? <SyntaxHighlighter showLineNumbers={true} style={agate} language={match[1]} PreTag="div" {...props} />
+		: <code className={className} {...props} />
+}
+
 const Slide = ({ children }) => {
 	return <div style={{ width: '1280px', height: '720px' }}>
-		<MDX>{children}</MDX>
+		<MDX components={{ code }}>{children}</MDX>
 	</div>
 }
 
