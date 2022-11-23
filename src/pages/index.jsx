@@ -1,11 +1,10 @@
 import { useState, useReducer, useMemo, useRef, useEffect } from 'react';
 import { openDocument } from '../document';
-import MDX from '@mdx-js/runtime';
 import html2canvas from 'html2canvas';
 import useSlides from '../useSlides';
+import useKeybindings from '../useKeybindings';
 import { container } from '../app.css.ts';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import Slide from '../slide';
 
 export async function getServerSideProps(context) {
 	const doc = await openDocument(process.env.projectFile);
@@ -15,19 +14,6 @@ export async function getServerSideProps(context) {
 			doc,
 		},
   }
-}
-
-const code = ({ className, ...props}) => {
-	const match = /language-(\w+)/.exec(className || '')
-	return match
-		? <SyntaxHighlighter showLineNumbers={true} style={a11yDark} language={match[1]} PreTag="div" {...props} />
-		: <code className={className} {...props} />
-}
-
-const Slide = ({ children }) => {
-	return <div style={{ width: '1280px', height: '720px' }}>
-		<MDX components={{ code }}>{children}</MDX>
-	</div>
 }
 
 const Preview = ({ children }) => {
@@ -69,21 +55,6 @@ const Preview = ({ children }) => {
 	</div>;
 }
 
-const useKeybindings = (keybindings) => {
-	useEffect(() => {
-		const eventListener = (e) => {
-			if(typeof keybindings[e.key] == 'function')
-				keybindings[e.key](e);
-
-			if(typeof keybindings['all'] == 'function')
-				keybindings['all'](e);
-		};
-
-		document.addEventListener('keyup', eventListener);
-		return () => document.removeEventListener('keyup', eventListener);
-	}, []);
-}
-
 const HomePage = ({ doc }) => {
 	const [ currentSlide, { next, prev, goto } ] = useSlides(doc);
 	useKeybindings({
@@ -116,6 +87,7 @@ const HomePage = ({ doc }) => {
 			<span>{currentSlide}</span>
 			<button onClick={next}>Next</button>
 		</div>
+		<a href="/present">Start presentation</a>
 	</div>;
 }
 
