@@ -34,7 +34,7 @@ const Present = ({ doc }) => {
 	});
 
 	return <div className={`${themeA} ${present}`}>
-		<Slide style={{ width: '100%', height: '100%' }}>{doc.sections[currentSlide]?.source}</Slide>
+		<Slide style={{ width: '100%', height: '100%', overflow: 'hidden' }}>{doc.sections[currentSlide]?.source}</Slide>
 		<StatusIndicator doc={doc} currentSlide={currentSlide} />
 	</div>;
 }
