@@ -52,6 +52,14 @@ export const statusIndicatorProgress = style({
 export const slide = style({
 	backgroundColor: vars.color.background,
 	color: vars.color.text,
+	fontSize: '4rem',
+	display: 'flex',
+	alignItems: 'center',
+	justifyContent: 'center',
+});
+
+export const innerSlide = style({
+	width: '80vw',
 });
 
 export const present = style({
