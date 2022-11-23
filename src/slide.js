@@ -1,6 +1,7 @@
 import MDX from '@mdx-js/runtime';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { slide } from './app.css.ts';
 
 const code = ({ className, ...props}) => {
 	const match = /language-(\w+)/.exec(className || '')
@@ -9,8 +10,8 @@ const code = ({ className, ...props}) => {
 		: <code className={className} {...props} />
 }
 
-const Slide = ({ children }) => {
-	return <div style={{ width: '1280px', height: '720px' }}>
+const Slide = ({ children, style }) => {
+	return <div style={style} className={slide}>
 		<MDX components={{ code }}>{children}</MDX>
 	</div>
 }

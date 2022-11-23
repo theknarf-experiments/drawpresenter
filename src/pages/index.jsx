@@ -45,7 +45,7 @@ const Preview = ({ children }) => {
 	return <div>
 		<div style={{ opacity: 0, position: 'fixed', pointerEvents: 'none' }}>
 			<div ref={ref}>
-				<Slide>{children}</Slide>
+				<Slide style={{ width: '1280px', height: '720px' }}>{children}</Slide>
 			</div>
 		</div>
 		<div
@@ -79,7 +79,7 @@ const HomePage = ({ doc }) => {
 			}
 			</div>
 			<div style={{ margin: '10px', padding: '10px', border: '1px solid black' }}>
-				<Slide>{doc.sections[currentSlide]?.source}</Slide>
+				<Slide style={{ width: '1280px', height: '720px' }}>{doc.sections[currentSlide]?.source}</Slide>
 			</div>
 		</div>
 		<div className={container}>

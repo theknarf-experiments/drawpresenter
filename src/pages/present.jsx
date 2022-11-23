@@ -2,7 +2,7 @@ import { openDocument } from '../document';
 import Slide from '../slide';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
-import { statusIndicator, statusIndicatorProgress } from '../app.css.ts';
+import { statusIndicator, statusIndicatorProgress, themeA, present } from '../app.css.ts';
 
 export async function getServerSideProps(context) {
 	const doc = await openDocument(process.env.projectFile);
@@ -33,8 +33,8 @@ const Present = ({ doc }) => {
 		'ArrowLeft': prev,
 	});
 
-	return <div>
-		<Slide>{doc.sections[currentSlide]?.source}</Slide>
+	return <div className={`${themeA} ${present}`}>
+		<Slide style={{ width: '100%', height: '100%' }}>{doc.sections[currentSlide]?.source}</Slide>
 		<StatusIndicator doc={doc} currentSlide={currentSlide} />
 	</div>;
 }
