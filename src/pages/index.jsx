@@ -4,8 +4,8 @@ import MDX from '@mdx-js/runtime';
 import html2canvas from 'html2canvas';
 import useSlides from '../useSlides';
 import { container } from '../app.css.ts';
-import SyntaxHighlighter from 'react-syntax-highlighter'
-import { agate } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
 export async function getServerSideProps(context) {
 	const doc = await openDocument(process.env.projectFile);
@@ -20,7 +20,7 @@ export async function getServerSideProps(context) {
 const code = ({ className, ...props}) => {
 	const match = /language-(\w+)/.exec(className || '')
 	return match
-		? <SyntaxHighlighter showLineNumbers={true} style={agate} language={match[1]} PreTag="div" {...props} />
+		? <SyntaxHighlighter showLineNumbers={true} style={a11yDark} language={match[1]} PreTag="div" {...props} />
 		: <code className={className} {...props} />
 }
 
