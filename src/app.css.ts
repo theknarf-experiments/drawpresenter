@@ -1,7 +1,8 @@
 import {
   createThemeContract,
   createTheme,
-  style
+  style,
+	globalStyle,
 } from '@vanilla-extract/css';
 
 // Theming
@@ -10,6 +11,7 @@ export const vars = createThemeContract({
 	color: {
 		background: null,
 		text: null,
+		link: null,
 	},
 	font: {
 		body: null,
@@ -20,6 +22,7 @@ export const themeA = createTheme(vars, {
 	color: {
 		background: 'black',
 		text: 'white',
+		link: 'white',
 	},
 	font: {
 		body: 'arial'
@@ -52,10 +55,14 @@ export const statusIndicatorProgress = style({
 export const slide = style({
 	backgroundColor: vars.color.background,
 	color: vars.color.text,
-	fontSize: '4rem',
+	fontSize: '2rem',
 	display: 'flex',
 	alignItems: 'center',
 	justifyContent: 'center',
+});
+
+globalStyle(`${slide} a`, {
+	color: vars.color.link,
 });
 
 export const innerSlide = style({

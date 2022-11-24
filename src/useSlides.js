@@ -27,7 +27,7 @@ const useSlides = (doc, config = {}) => {
 
 	useEffect(() => {
 		if(config?.hashRouting && typeof window !== "undefined") {
-			const value = window.location.hash.match(/^#(?<num>.*)$/).groups.num || 0;
+			const value = window.location.hash.match(/^#(?<num>.*)$/)?.groups?.num || 0;
 			if(value !== 0) {
 				dispatch({ type: 'goto', value })
 			}

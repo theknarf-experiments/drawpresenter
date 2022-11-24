@@ -10,10 +10,24 @@ const code = ({ className, ...props}) => {
 		: <code className={className} {...props} />
 }
 
+const img = ({ src, ...props }) => {
+	const newSrc = src.replace(/^\./, '/files/');
+
+	return <img
+		src={newSrc}
+		{...props}
+		/>
+}
+
+const MDXComponents = {
+	code,
+	img
+}
+
 const Slide = ({ children, style }) => {
 	return <div style={style} className={slide}>
 		<div className={innerSlide}>
-			<MDX components={{ code }}>{children}</MDX>
+			<MDX components={MDXComponents}>{children}</MDX>
 		</div>
 	</div>
 }
