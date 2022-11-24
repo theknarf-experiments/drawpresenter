@@ -5,9 +5,13 @@ import { slide, innerSlide } from './app.css.ts';
 
 const code = ({ className, ...props}) => {
 	const match = /language-(\w+)/.exec(className || '')
-	return match
-		? <SyntaxHighlighter showLineNumbers={true} style={a11yDark} language={match[1]} PreTag="div" {...props} />
-		: <code className={className} {...props} />
+	if(match) {
+		return <div style={{ fontSize: '1.8rem' }}>
+			<SyntaxHighlighter showLineNumbers={true} style={a11yDark} language={match[1]} PreTag="div" {...props} />
+		</div>
+	} else {
+		return <code className={className} {...props} />
+	}
 }
 
 const img = ({ src, ...props }) => {
