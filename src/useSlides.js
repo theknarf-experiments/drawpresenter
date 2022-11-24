@@ -1,23 +1,39 @@
-import { useReducer } from 'react';
+import { useReducer, useEffect } from 'react';
 
-const useSlides = (doc) => {
+const useSlides = (doc, config = {}) => {
 	const max = doc.sections.length - 1;
 	const clamp = (value, min, max) => {
 		return Math.min(Math.max(value, min), max);
 	};
 
 	const [state, dispatch] = useReducer((state, action) => {
+		let newState = state;
 		if(action.type == 'next') {
-			return clamp(state + 1, 0, max);
+			newState = clamp(state + 1, 0, max);
 		} else if(action.type == 'prev') {
-			return clamp(state - 1, 0, max);
+			newState = clamp(state - 1, 0, max);
 		} else if(action.type == 'goto') {
-			return clamp(action.value, 0, max);
+			newState = clamp(action.value, 0, max);
 		}
 
-		return state;
+		if(config?.hashRouting && typeof window !== "undefined") {
+			if(newState !== state) {
+				history.replaceState(null, null, `#${newState}`);
+			}
+		}
+
+		return newState;
 	}, 0);
 
+	useEffect(() => {
+		if(config?.hashRouting && typeof window !== "undefined") {
+			const value = window.location.hash.match(/^#(?<num>.*)$/).groups.num || 0;
+			if(value !== 0) {
+				dispatch({ type: 'goto', value })
+			}
+		}
+	}, []);
+	
 	return [
 		state,
 		{
