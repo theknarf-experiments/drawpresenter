@@ -88,6 +88,7 @@ const HomePage = ({ doc }) => {
 			<button onClick={next}>Next</button>
 		</div>
 		<a href="/present">Start presentation</a>
+		<a href="/print">Open for print</a>
 	</div>;
 }
 

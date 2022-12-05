@@ -78,3 +78,10 @@ export const present = style({
 	left: 0,
 	top: 0,
 });
+
+export const print = style({
+	marginBottom: '5px',
+	width: `${1280*1.45}px`,
+	height: `${720*1.45}px`,
+	colorAdjust: 'exact',
+});
