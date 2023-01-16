@@ -1,25 +1,41 @@
 {
-	"name": "drawpresenter",
-	"scripts": {
-		"start": "./src/cli.js start",
-		"dev": "nodemon ./src/cli.js start"
-	},
-	"dependencies": {
-		"@mdx-js/mdx": "^2.1.5",
-		"@mdx-js/react": "^2.1.5",
-		"@mdx-js/runtime": "^1.6.22",
-		"@vanilla-extract/next-plugin": "^2.1.1",
-		"commander": "^9.4.1",
-		"express": "^4.18.2",
-		"html2canvas": "^1.4.1",
-		"js-yaml": "^4.1.0",
-		"next": "^13.0.4",
-		"react": "^18.2.0",
-		"react-dom": "^18.2.0",
-		"react-syntax-highlighter": "^15.5.0"
-	},
-	"packageManager": "yarn@3.3.0",
-	"devDependencies": {
-		"nodemon": "^2.0.20"
-	}
+  "name": "drawpresenter",
+  "packageManager": "yarn@3.3.0",
+  "scripts": {
+    "start": "./src/cli.js start",
+    "dev": "nodemon ./src/cli.js start",
+    "start:storybook": "start-storybook -p 6006",
+    "build:storybook": "build-storybook"
+  },
+  "dependencies": {
+    "@mdx-js/mdx": "^2.1.5",
+    "@mdx-js/react": "^2.1.5",
+    "@mdx-js/runtime": "^1.6.22",
+    "@vanilla-extract/next-plugin": "^2.1.1",
+    "cmdk": "^0.1.21",
+    "commander": "^9.4.1",
+    "express": "^4.18.2",
+    "html2canvas": "^1.4.1",
+    "js-yaml": "^4.1.0",
+    "next": "^13.0.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-syntax-highlighter": "^15.5.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.12",
+    "@storybook/addon-actions": "^6.5.15",
+    "@storybook/addon-docs": "^6.5.15",
+    "@storybook/addon-essentials": "^6.5.15",
+    "@storybook/addon-interactions": "^6.5.15",
+    "@storybook/addon-links": "^6.5.15",
+    "@storybook/builder-webpack5": "^6.5.15",
+    "@storybook/manager-webpack5": "^6.5.15",
+    "@storybook/react": "^6.5.15",
+    "@storybook/testing-library": "^0.0.13",
+    "@vanilla-extract/webpack-plugin": "^2.2.0",
+    "babel-loader": "^8.3.0",
+    "nodemon": "^2.0.20",
+    "webpack-merge": "^5.8.0"
+  }
 }

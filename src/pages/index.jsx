@@ -5,6 +5,8 @@ import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
 import { container } from '../app.css.ts';
 import Slide from '../slide';
+import CMDK from '../components/cmdk';
+import { Command } from 'cmdk';
 
 export async function getServerSideProps(context) {
 	const doc = await openDocument(process.env.projectFile);
@@ -64,9 +66,20 @@ const HomePage = ({ doc }) => {
 		'ArrowLeft': prev,
 	});
 
+	const startPresentation = () => {
+		window.location.pathname = "/present";
+	}
+	const openForPrint = () => {
+		window.location.pathname = "/print";
+	}
+
 	//console.log(doc);
 
   return <div>
+		<CMDK>
+			<Command.Item onSelect={startPresentation}>Start presentation</Command.Item>
+			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>
+		</CMDK>
 		<div style={{ display: 'flex', flexDirection: 'row' }}>
 			<div style={{ margin: '10px', border: '1px solid black', overflow: 'scroll', height: '765px' }}>
 			{
