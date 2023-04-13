@@ -1,13 +1,35 @@
+import React from 'react';
 import MDX from '@mdx-js/runtime';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { slide, innerSlide } from './app.css.ts';
+import mermaid from 'mermaid';
+
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  securityLevel: 'loose',
+});
+
+class Mermaid extends React.Component {
+  componentDidMount() {
+    mermaid.contentLoaded();
+  }
+  render() {
+    return <div className="mermaid">{this.props.children}</div>;
+  }
+}
+
 
 const code = ({ className, children, ...props}) => {
 	const match = /language-(\w+)/.exec(className || '');
 
 	// Remove extra newlines in the beginnign or end
 	const code = children.replace(/^\n|\n$/g, '');
+
+	if(match[1] == "mermaid") {
+		return <Mermaid>{code}</Mermaid>;
+	}
 
 	if(match) {
 		return <div style={{ fontSize: '1.8rem' }}>
