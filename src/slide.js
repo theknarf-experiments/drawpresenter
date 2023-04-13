@@ -3,14 +3,18 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { slide, innerSlide } from './app.css.ts';
 
-const code = ({ className, ...props}) => {
-	const match = /language-(\w+)/.exec(className || '')
+const code = ({ className, children, ...props}) => {
+	const match = /language-(\w+)/.exec(className || '');
+
+	// Remove extra newlines in the beginnign or end
+	const code = children.replace(/^\n|\n$/g, '');
+
 	if(match) {
 		return <div style={{ fontSize: '1.8rem' }}>
-			<SyntaxHighlighter showLineNumbers={true} style={a11yDark} language={match[1]} PreTag="div" {...props} />
+			<SyntaxHighlighter showLineNumbers={true} style={a11yDark} language={match[1]} PreTag="div" {...props}>{code}</SyntaxHighlighter>
 		</div>
 	} else {
-		return <code className={className} {...props} />
+		return <code className={className} {...props}>{code}</code>
 	}
 }
 
