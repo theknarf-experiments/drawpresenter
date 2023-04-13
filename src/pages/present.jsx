@@ -3,6 +3,8 @@ import Slide from '../slide';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
 import { statusIndicator, statusIndicatorProgress, themeA, present } from '../app.css.ts';
+import CMDK from '../components/cmdk';
+import { Command } from 'cmdk';
 
 export async function getServerSideProps(context) {
 	const doc = await openDocument(process.env.projectFile);
@@ -45,7 +47,21 @@ const Present = ({ doc }) => {
 		'f': openFullscreen,
 	});
 
+	const openOverview = () => {
+		window.location.pathname = "/";
+	}
+	const openForPrint = () => {
+		window.location.pathname = "/print";
+	}
+
+
 	return <div className={`${themeA} ${present}`}>
+		<CMDK>
+			<Command.Item onSelect={openOverview}>Open overview</Command.Item>
+			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>
+			<Command.Item onSelect={openFullscreen}>Fullscreen</Command.Item>
+		</CMDK>
+
 		<Slide style={{ width: '100%', height: '100%', overflow: 'hidden' }}>{doc.sections[currentSlide]?.source}</Slide>
 		<StatusIndicator doc={doc} currentSlide={currentSlide} />
 	</div>;
