@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import MDX from '@mdx-js/runtime';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { slide, innerSlide } from './app.css.ts';
 import mermaid from 'mermaid';
+import confetti from 'canvas-confetti';
 
 mermaid.initialize({
   startOnLoad: true,
@@ -51,10 +52,16 @@ const img = ({ src, ...props }) => {
 
 const MDXComponents = {
 	code,
-	img
+	img,
 }
 
 const Slide = ({ children, style }) => {
+	useEffect(() => {
+		if(typeof window !== "undefined") {
+			window.confetti = confetti;
+		}
+	}, []);
+
 	return <div style={style} className={slide}>
 		<div className={innerSlide}>
 			<MDX components={MDXComponents}>{children}</MDX>
