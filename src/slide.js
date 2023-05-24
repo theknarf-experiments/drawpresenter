@@ -5,6 +5,7 @@ import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { slide, innerSlide } from './app.css.ts';
 import mermaid from 'mermaid';
 import confetti from 'canvas-confetti';
+import { Tweet } from "mdx-embed/dist/components/twitter";
 
 mermaid.initialize({
   startOnLoad: true,
@@ -53,6 +54,7 @@ const img = ({ src, ...props }) => {
 const MDXComponents = {
 	code,
 	img,
+	Tweet,
 }
 
 const Slide = ({ children, style }) => {
