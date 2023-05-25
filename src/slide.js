@@ -29,7 +29,7 @@ const code = ({ className, children, ...props}) => {
 	// Remove extra newlines in the beginnign or end
 	const code = children.replace(/^\n|\n$/g, '');
 
-	if(match[1] == "mermaid") {
+	if(match && match[1] == "mermaid") {
 		return <Mermaid>{code}</Mermaid>;
 	}
 
