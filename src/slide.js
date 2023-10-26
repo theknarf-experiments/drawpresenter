@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, createContext, useContext, memo } from 'react';
 import MDX from '@mdx-js/runtime';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
@@ -6,6 +6,7 @@ import { slide, innerSlide } from './app.css.ts';
 import mermaid from 'mermaid';
 import confetti from 'canvas-confetti';
 import { Tweet } from "mdx-embed/dist/components/twitter";
+import useKeybindings from './useKeybindings';
 
 mermaid.initialize({
   startOnLoad: true,
@@ -51,11 +52,39 @@ const img = ({ src, ...props }) => {
 		/>
 }
 
+const RevealContext = createContext(null);
+
+const useReveal = (currentId) => {
+	const { currentReveal} = useContext(RevealContext);
+	const show = currentReveal >= currentId;
+
+	//console.log(`currentReveal: ${currentReveal}, currentId: ${currentId}, show: ${show}`);
+
+	return [show];
+}
+
+const Reveal = ({ children, currentId, style }) => {
+	const [show] = useReveal(currentId);
+
+	return <span style={{
+		opacity: show ? '100%' : '0%',
+		transition: 'opacity 0.4s',
+		...(style || {}),
+	}}>{children}</span>;
+};
+
 const MDXComponents = {
 	code,
 	img,
 	Tweet,
-}
+	Reveal,
+};
+
+const InnerSlide = memo(({ children }) => {
+	return <div className={innerSlide}>
+		<MDX components={MDXComponents}>{children}</MDX>
+	</div>;
+});
 
 const Slide = ({ children, style }) => {
 	useEffect(() => {
@@ -64,11 +93,30 @@ const Slide = ({ children, style }) => {
 		}
 	}, []);
 
-	return <div style={style} className={slide}>
-		<div className={innerSlide}>
-			<MDX components={MDXComponents}>{children}</MDX>
+	const [currentReveal, setCurrentReveal] = useState(0);
+
+	useEffect(() => {
+		const eventListener = (e) => {
+			if(e.key === 'ArrowUp') {
+				setCurrentReveal(c => (c - 1) > 0 ? c - 1 : 0);
+			} else if (e.key === 'ArrowDown') {
+				setCurrentReveal(c => c + 1);
+			}
+		};
+
+		document.addEventListener('keyup', eventListener);
+		return () => document.removeEventListener('keyup', eventListener);
+	}, []);
+
+	return (
+		<div style={style} className={slide}>
+			<RevealContext.Provider value={{
+				currentReveal,
+			}}>
+				<InnerSlide>{children}</InnerSlide>
+			</RevealContext.Provider>
 		</div>
-	</div>
+	);
 }
 
 export default Slide;

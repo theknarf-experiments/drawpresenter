@@ -40,9 +40,7 @@ const StatusIndicator = ({ doc, currentSlide }) => {
 const Present = ({ doc }) => {
 	const [ currentSlide, { next, prev, goto } ] = useSlides(doc, { hashRouting: true });
 	useKeybindings({
-		'ArrowDown': next,
 		'ArrowRight': next,
-		'ArrowUp': prev,
 		'ArrowLeft': prev,
 		'f': openFullscreen,
 	});
