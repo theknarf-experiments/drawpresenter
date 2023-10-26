@@ -5,6 +5,7 @@ import useKeybindings from '../useKeybindings';
 import { statusIndicator, statusIndicatorProgress, themeA, present } from '../app.css.ts';
 import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
+import { useBroadcast, useBroadcastListen } from '../useBroadcast';
 
 export async function getServerSideProps(context) {
 	const doc = await openDocument(process.env.projectFile);
@@ -44,6 +45,12 @@ const Present = ({ doc }) => {
 		'ArrowLeft': prev,
 		'f': openFullscreen,
 	});
+	const [ channel ] = useBroadcast('presenter');
+	useBroadcastListen(channel, (e) => {
+		if(e.data !== null) {
+			goto(e.data)
+		};
+	});
 
 	const openOverview = () => {
 		window.location.pathname = "/";
@@ -51,12 +58,15 @@ const Present = ({ doc }) => {
 	const openForPrint = () => {
 		window.location.pathname = "/print";
 	}
-
+	const openPresenterView = () => {
+		window.open('/presenter', 'presenterview', 'popup');
+	}
 
 	return <div className={`${themeA} ${present}`}>
 		<CMDK>
 			<Command.Item onSelect={openOverview}>Open overview</Command.Item>
 			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>
+			<Command.Item onSelect={openPresenterView}>Open presenter view</Command.Item>
 			<Command.Item onSelect={openFullscreen}>Fullscreen</Command.Item>
 		</CMDK>
 
