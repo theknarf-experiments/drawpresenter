@@ -7,6 +7,7 @@ import { container } from '../app.css.ts';
 import Slide from '../slide';
 import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
+import { statusIndicator, statusIndicatorProgress, themeA, present } from '../app.css.ts';
 
 export async function getServerSideProps(context) {
 	const doc = await openDocument(process.env.projectFile);
@@ -47,7 +48,7 @@ const Preview = ({ children }) => {
 	return <div>
 		<div style={{ opacity: 0, position: 'fixed', pointerEvents: 'none' }}>
 			<div ref={ref}>
-				<Slide style={{ width: '1280px', height: '720px' }}>{children}</Slide>
+				<Slide style={{ width: '15vw', height: '15vh', fontSize: '14px' }}>{children}</Slide>
 			</div>
 		</div>
 		<div
@@ -73,13 +74,16 @@ const HomePage = ({ doc }) => {
 		window.location.pathname = "/print";
 	}
 
-	//console.log(doc);
-
-  return <div>
+	return <div className={`${themeA} ${present}`}>
 		<CMDK>
 			<Command.Item onSelect={startPresentation}>Start presentation</Command.Item>
 			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>
 		</CMDK>
+		<div className={container}>
+			<a href="/present">Start presentation</a>&nbsp;
+			<a href="/print">Open for print</a>&nbsp;
+			<span>Hit cmd+k for more actions</span>
+		</div>
 		<div style={{ display: 'flex', flexDirection: 'row' }}>
 			<div style={{ margin: '10px', border: '1px solid black', overflow: 'scroll', height: '765px' }}>
 			{
@@ -92,7 +96,7 @@ const HomePage = ({ doc }) => {
 			}
 			</div>
 			<div style={{ margin: '10px', padding: '10px', border: '1px solid black' }}>
-				<Slide style={{ width: '1280px', height: '720px' }}>{doc.sections[currentSlide]?.source}</Slide>
+				<Slide style={{ width: '60vw', height: '60vh' }}>{doc.sections[currentSlide]?.source}</Slide>
 			</div>
 		</div>
 		<div className={container}>
@@ -100,8 +104,6 @@ const HomePage = ({ doc }) => {
 			<span>{currentSlide}</span>
 			<button onClick={next}>Next</button>
 		</div>
-		<a href="/present">Start presentation</a>
-		<a href="/print">Open for print</a>
 	</div>;
 }
 
