@@ -1,0 +1,5 @@
+test/
+.storybook/
+.next/
+src/.next/
+src/**/*.stories.jsx
