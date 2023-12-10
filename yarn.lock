@@ -6224,16 +6224,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cmdk@npm:^0.1.21":
-  version: 0.1.21
-  resolution: "cmdk@npm:0.1.21"
+"cmdk@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "cmdk@npm:0.2.0"
   dependencies:
     "@radix-ui/react-dialog": 1.0.0
     command-score: 0.1.2
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: e0f52a06b345199cd3399ba846d2d8dce24741e8efaea28e315169e0d082934915af47bfe454b92703d0c98e582e30cb83804416686a4f0abc156abe3f8bd442
+  checksum: b81add6daebb192e0ab79bd776aa22c75a9aa5c8ca3c40d6c99cbe3ab4f276bf580eb49d1e568126b6af1e72c0012b53ec260c241a594baf782a80b866a0d17e
   languageName: node
   linkType: hard
 
@@ -7606,7 +7606,7 @@ __metadata:
     "@vanilla-extract/webpack-plugin": ^2.2.0
     babel-loader: ^8.3.0
     canvas-confetti: ^1.6.0
-    cmdk: ^0.1.21
+    cmdk: ^0.2.0
     commander: ^9.4.1
     express: ^4.18.2
     html2canvas: ^1.4.1

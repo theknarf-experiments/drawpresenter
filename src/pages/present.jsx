@@ -43,7 +43,6 @@ const Present = ({ doc }) => {
 	useKeybindings({
 		'ArrowRight': next,
 		'ArrowLeft': prev,
-		'f': openFullscreen,
 	});
 	const [ channel ] = useBroadcast('presenter');
 	useBroadcastListen(channel, (e) => {

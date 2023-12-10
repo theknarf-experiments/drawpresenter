@@ -13,7 +13,7 @@
     "@mdx-js/runtime": "^1.6.22",
     "@vanilla-extract/next-plugin": "^2.1.1",
     "canvas-confetti": "^1.6.0",
-    "cmdk": "^0.1.21",
+    "cmdk": "^0.2.0",
     "commander": "^9.4.1",
     "express": "^4.18.2",
     "html2canvas": "^1.4.1",

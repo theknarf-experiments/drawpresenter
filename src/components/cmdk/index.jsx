@@ -10,6 +10,7 @@ const CommandMenu = ({ children }) => {
   useEffect(() => {
     const down = (e) => {
       if (e.key === 'k' && e.metaKey) {
+				e.preventDefault()
         setOpen((open) => !open);
       }
     }
@@ -19,6 +20,9 @@ const CommandMenu = ({ children }) => {
   }, [])
 
 	const onKeyDown = (e) => {
+		if(e.keyCode === 13 /* enter */) {
+			setOpen(false);
+		}
 		//console.log(e.key, e);
 	}
 
