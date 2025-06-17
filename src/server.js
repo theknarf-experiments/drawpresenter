@@ -1,8 +1,6 @@
 const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
-const { createVanillaExtractPlugin } = require('@vanilla-extract/next-plugin');
-const withVanillaExtract = createVanillaExtractPlugin();
 const path = require('path');
 const express = require('express');
 
@@ -15,20 +13,9 @@ const start = async (projectFile, dev = false, hostname = 'localhost', port = 30
 		dir: __dirname,
 		hostname,
 		port,
-		conf: withVanillaExtract({
-			env: {
-				projectFile
-			},
-			webpack: (config, { isServer }) => {
-				// Fixes npm packages that depend on `fs` module
-				if (!isServer) {
-					config.resolve.fallback.fs = false;
-				}
-
-				return config;
-			},
-		}),
+    turbo: false,
 	});
+  process.env.projectFile = projectFile;
 	const handle = app.getRequestHandler();
 	await app.prepare()
 
