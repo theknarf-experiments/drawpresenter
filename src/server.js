@@ -3,6 +3,7 @@ const { parse } = require('url');
 const next = require('next');
 const path = require('path');
 const express = require('express');
+const { openDocument } = require('./document');
 
 const start = async (projectFile, dev = false, hostname = 'localhost', port = 3000) => {
 	// -- Setting up Next.js --
@@ -26,6 +27,15 @@ const start = async (projectFile, dev = false, hostname = 'localhost', port = 30
 	const projectPath = path.dirname(projectFile);
 	console.log(projectPath);
 	server.use('/files', express.static(projectPath))
+
+  server.use('/doc', async (req, res, next) => {
+    console.log(`/doc ${projectFile}`);
+    const doc = await openDocument(projectFile);
+
+    res.send(JSON.stringify({
+      doc,
+    }));
+  });
 
 	server.use(async (req, res, next) => {
 		try {
