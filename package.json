@@ -3,9 +3,7 @@
   "packageManager": "yarn@3.3.0",
   "scripts": {
     "start": "./src/cli.js start",
-    "dev": "nodemon ./src/cli.js start",
-    "start:storybook": "start-storybook -p 6006",
-    "build:storybook": "build-storybook"
+    "dev": "nodemon ./src/cli.js start"
   },
   "dependencies": {
     "@mdx-js/mdx": "^2.1.5",
@@ -27,15 +25,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.12",
-    "@storybook/addon-actions": "^6.5.15",
-    "@storybook/addon-docs": "^6.5.15",
-    "@storybook/addon-essentials": "^6.5.15",
-    "@storybook/addon-interactions": "^6.5.15",
-    "@storybook/addon-links": "^6.5.15",
-    "@storybook/builder-webpack5": "^6.5.15",
-    "@storybook/manager-webpack5": "^6.5.15",
-    "@storybook/react": "^6.5.15",
-    "@storybook/testing-library": "^0.0.13",
     "@vanilla-extract/webpack-plugin": "^2.2.0",
     "babel-loader": "^8.3.0",
     "nodemon": "^2.0.20",
