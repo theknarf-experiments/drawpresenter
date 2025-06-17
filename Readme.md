@@ -3,6 +3,6 @@
 To test:
 
 ```
-yarn
-yarn start ./test/doc.md
+pnpm i
+pnpm start ./test/doc.md
 ```
