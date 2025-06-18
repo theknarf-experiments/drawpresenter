@@ -1,5 +1,4 @@
 import React, { useEffect, useState, createContext, useContext, memo } from 'react';
-import MDX from '@mdx-js/runtime';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { slide, innerSlide } from './app.css.ts';
@@ -7,6 +6,8 @@ import mermaid from 'mermaid';
 import confetti from 'canvas-confetti';
 import { Tweet } from "mdx-embed/dist/components/twitter";
 import useKeybindings from './useKeybindings';
+import { evaluate } from '@mdx-js/mdx'
+import * as runtime from 'react/jsx-runtime'
 
 mermaid.initialize({
   startOnLoad: true,
@@ -81,8 +82,23 @@ const MDXComponents = {
 };
 
 const InnerSlide = memo(({ children }) => {
+  const [ MDX, setMDX ] = useState(null);
+
+ useEffect(() => {
+  (async () => {
+    const { default: MDX } = await evaluate(children, runtime);
+    const content = MDX({
+      components: {
+        MDXComponents
+      }
+    });
+
+    setMDX(content);
+  })();
+ }, [children]);
+
 	return <div className={innerSlide}>
-		<MDX components={MDXComponents}>{children}</MDX>
+    {MDX}
 	</div>;
 });
 
