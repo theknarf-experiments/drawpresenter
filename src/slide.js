@@ -86,12 +86,8 @@ const InnerSlide = memo(({ children }) => {
 
  useEffect(() => {
   (async () => {
-    const { default: MDX } = await evaluate(children, runtime);
-    const content = MDX({
-      components: {
-        MDXComponents
-      }
-    });
+    const { default: MDX } = await evaluate(children, { ...runtime, useMDXComponents: () => MDXComponents });
+    const content = MDX();
 
     setMDX(content);
   })();

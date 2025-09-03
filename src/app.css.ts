@@ -59,10 +59,27 @@ export const slide = style({
 	display: 'flex',
 	alignItems: 'center',
 	justifyContent: 'center',
+  fontFamily: 'Helvetica, sans-serif',
 });
 
 globalStyle(`${slide} a`, {
 	color: vars.color.link,
+});
+
+globalStyle(`${slide} blockquote`, {
+  position: 'relative',
+  padding: '0px 1rem 1rem 4rem',
+  fontStyle: 'italic',
+});
+
+globalStyle(`${slide} blockquote::before`, {
+  fontFamily: 'Arial',
+  content: "\\201C",
+  color: '#78C0A8',
+  fontSize: '2em',
+  position: 'absolute',
+  left: '0px',
+  top: '-10px',
 });
 
 export const innerSlide = style({
