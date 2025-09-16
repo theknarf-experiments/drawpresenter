@@ -61,7 +61,7 @@ const openDocument = async (filePath) => {
 		const file = await fs.promises.readFile(filePath);
 		return parse("" + file, filePath);
 	} catch(e) {
-		console.error(e);
+		throw new Error(`Failed to open document: ${filePath} - ${e.message}`);
 	}
 }
 
