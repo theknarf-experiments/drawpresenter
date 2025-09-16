@@ -1,5 +1,5 @@
-import { openDocument } from '../document';
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Slide from '../slide';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
@@ -7,16 +7,6 @@ import { statusIndicator, statusIndicatorProgress, themeA, present } from '../ap
 import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
 import { useBroadcast } from '../useBroadcast';
-
-export async function getServerSideProps(context) {
-	const doc = await openDocument(process.env.projectFile);
-
-  return {
-    props: {
-			doc,
-		},
-  }
-}
 
 // Shows a bar at the bottom of the presentation giving a hint on how far in the presentation you are
 const StatusIndicator = ({ doc, currentSlide }) => {
@@ -62,7 +52,12 @@ const Timer = () => {
 	</div>
 }
 
-const Presenter = ({ doc }) => {
+const Presenter = () => {
+	const { data: doc, isLoading, error } = useQuery({
+		queryKey: ['doc'],
+		queryFn: () => fetch('/doc').then(res => res.json()).then(data => data.doc)
+	});
+
 	const [ currentSlide, { next, prev, goto } ] = useSlides(doc, { hashRouting: true });
 	const [ channel ] = useBroadcast('presenter');
 
@@ -83,6 +78,10 @@ const Presenter = ({ doc }) => {
 	const openForPrint = () => {
 		window.location.pathname = "/print";
 	}
+
+	if (isLoading) return <div>Loading...</div>;
+	if (error) return <div>Error: {error.message}</div>;
+	if (!doc) return <div>No document loaded</div>;
 
 	return <div className={`${themeA} ${present}`}>
 		<CMDK>

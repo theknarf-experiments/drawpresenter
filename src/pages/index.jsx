@@ -1,5 +1,5 @@
 import { useState, useReducer, useMemo, useRef, useEffect } from 'react';
-import { openDocument } from '../document';
+import { useQuery } from '@tanstack/react-query';
 import html2canvas from 'html2canvas';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
@@ -8,16 +8,6 @@ import Slide from '../slide';
 import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
 import { statusIndicator, statusIndicatorProgress, themeA, present } from '../app.css.ts';
-
-export async function getServerSideProps(context) {
-	const doc = await openDocument(process.env.projectFile);
-
-  return {
-    props: {
-			doc,
-		},
-  }
-}
 
 const Preview = ({ children }) => {
 	const ref = useRef(null);
@@ -58,7 +48,12 @@ const Preview = ({ children }) => {
 	</div>;
 }
 
-const HomePage = ({ doc }) => {
+const HomePage = () => {
+	const { data: doc, isLoading, error } = useQuery({
+		queryKey: ['doc'],
+		queryFn: () => fetch('/doc').then(res => res.json()).then(data => data.doc)
+	});
+
 	const [ currentSlide, { next, prev, goto } ] = useSlides(doc);
 	useKeybindings({
 		'ArrowDown': next,
@@ -73,6 +68,10 @@ const HomePage = ({ doc }) => {
 	const openForPrint = () => {
 		window.location.pathname = "/print";
 	}
+
+	if (isLoading) return <div>Loading...</div>;
+	if (error) return <div>Error: {error.message}</div>;
+	if (!doc) return <div>No document loaded</div>;
 
 	return <div className={`${themeA} ${present}`}>
 		<CMDK>

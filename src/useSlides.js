@@ -1,7 +1,7 @@
 import { useReducer, useEffect } from 'react';
 
 const useSlides = (doc, config = {}) => {
-	const max = doc.sections.length - 1;
+	const max = doc && doc.sections ? doc.sections.length - 1 : 0;
 	const clamp = (value, min, max) => {
 		return Math.min(Math.max(value, min), max);
 	};
