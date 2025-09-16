@@ -1,7 +1,8 @@
 ---
-test:
-   bob: "test"
-   haha: NO
+colors:
+    bg: "blue"
+    text: "yellow"
+    link: "white"
 ---
 
 # Presentation title awesome

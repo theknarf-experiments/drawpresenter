@@ -1,5 +1,4 @@
 import { useState, useReducer, useMemo, useRef, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import html2canvas from 'html2canvas';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
@@ -48,12 +47,7 @@ const Preview = ({ children }) => {
 }
 
 const HomePage = () => {
-	const { data: doc, isLoading, error } = useQuery({
-		queryKey: ['doc'],
-		queryFn: () => fetch('/doc').then(res => res.json()).then(data => data.doc)
-	});
-
-	const [ currentSlide, { next, prev, goto } ] = useSlides(doc);
+	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides();
 	useKeybindings({
 		'ArrowDown': next,
 		'ArrowRight': next,
@@ -72,7 +66,7 @@ const HomePage = () => {
 	if (error) return <div>Error: {error.message}</div>;
 	if (!doc) return <div>No document loaded</div>;
 
-	return <div className={`themeA ${styles.present}`}>
+	return <div className={styles.present}>
 		<CMDK>
 			<Command.Item onSelect={startPresentation}>Start presentation</Command.Item>
 			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>

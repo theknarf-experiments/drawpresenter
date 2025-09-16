@@ -9,13 +9,21 @@ const Present = () => {
 		queryFn: () => fetch('/doc').then(res => res.json()).then(data => data.doc)
 	});
 
+	useEffect(() => {
+		if (doc?.frontmatter?.colors) {
+			Object.entries(doc.frontmatter.colors).forEach(([key, value]) => {
+				document.documentElement.style.setProperty(`--${key}`, value);
+			});
+		}
+	}, [doc]);
+
 	if (isLoading) return <div>Loading...</div>;
 	if (error) return <div>Error: {error.message}</div>;
 	if (!doc) return <div>No document loaded</div>;
 	return <div>
 		{
 			doc.sections.map((section, i) => (
-				<div className={`themeA ${styles.print}`} key={`section-${i}`}>
+				<div className={styles.print} key={`section-${i}`}>
 					<Slide style={{ width: '100%', height: '100%', overflow: 'hidden' }}>{section.source}</Slide>
 					<div style={{ pageBreakAfter: 'always' }}></div>
 				</div>

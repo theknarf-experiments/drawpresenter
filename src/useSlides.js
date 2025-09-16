@@ -1,6 +1,20 @@
 import { useReducer, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
-const useSlides = (doc, config = {}) => {
+const useSlides = (config = {}) => {
+	const { data: doc, isLoading, error } = useQuery({
+		queryKey: ['doc'],
+		queryFn: () => fetch('/doc').then(res => res.json()).then(data => data.doc)
+	});
+
+	useEffect(() => {
+		if (doc?.frontmatter?.colors) {
+			Object.entries(doc.frontmatter.colors).forEach(([key, value]) => {
+				document.documentElement.style.setProperty(`--${key}`, value);
+			});
+		}
+	}, [doc]);
+
 	const max = doc && doc.sections ? doc.sections.length - 1 : 0;
 	const clamp = (value, min, max) => {
 		return Math.min(Math.max(value, min), max);
@@ -40,7 +54,10 @@ const useSlides = (doc, config = {}) => {
 			next: () => dispatch({ type: 'next' }),
 			prev: () => dispatch({ type: 'prev' }),
 			goto: (value) => dispatch({ type: 'goto', value }),
-		}
+		},
+		doc,
+		isLoading,
+		error
 	];
 }
 

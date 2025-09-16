@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import Slide from '../slide';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
@@ -30,12 +29,7 @@ const StatusIndicator = ({ doc, currentSlide }) => {
 }
 
 const Present = () => {
-	const { data: doc, isLoading, error } = useQuery({
-		queryKey: ['doc'],
-		queryFn: () => fetch('/doc').then(res => res.json()).then(data => data.doc)
-	});
-
-	const [ currentSlide, { next, prev, goto } ] = useSlides(doc, { hashRouting: true });
+	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides({ hashRouting: true });
 	useKeybindings({
 		'ArrowRight': next,
 		'ArrowLeft': prev,
@@ -61,7 +55,7 @@ const Present = () => {
 	if (error) return <div>Error: {error.message}</div>;
 	if (!doc) return <div>No document loaded</div>;
 
-	return <div className={`themeA ${styles.present}`}>
+	return <div className={styles.present}>
 		<CMDK>
 			<Command.Item onSelect={openOverview}>Open overview</Command.Item>
 			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>

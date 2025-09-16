@@ -5,13 +5,6 @@
   --font-body: arial;
 }
 
-.themeA {
-  --bg: black;
-  --text: white;
-  --link: white;
-  --font-body: arial;
-}
-
 .slide {
   background-color: var(--bg);
   color: var(--text);
