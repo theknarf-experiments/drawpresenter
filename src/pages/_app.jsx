@@ -1,4 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import '../variables.css';
+import '../cmdk.css';
 
 const queryClient = new QueryClient();
 

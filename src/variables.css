@@ -1,0 +1,47 @@
+:root {
+  --bg: black;
+  --text: white;
+  --link: white;
+  --font-body: arial;
+}
+
+.themeA {
+  --bg: black;
+  --text: white;
+  --link: white;
+  --font-body: arial;
+}
+
+.slide {
+  background-color: var(--bg);
+  color: var(--text);
+  font-size: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Helvetica, sans-serif';
+}
+
+.slide a {
+  color: var(--link);
+}
+
+.slide blockquote {
+  position: relative;
+  padding: 0px 1rem 1rem 4rem;
+  font-style: italic;
+}
+
+.slide blockquote::before {
+  font-family: Arial;
+  content: "\201C";
+  color: #78C0A8;
+  font-size: 2em;
+  position: absolute;
+  left: 0px;
+  top: -10px;
+}
+
+.innerSlide {
+  width: 80vw;
+}

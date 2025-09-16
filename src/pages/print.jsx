@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Slide from '../slide';
-import { themeA, print } from '../app.css.ts';
+import styles from '../app.module.css';
 
 const Present = () => {
 	const { data: doc, isLoading, error } = useQuery({
@@ -15,7 +15,7 @@ const Present = () => {
 	return <div>
 		{
 			doc.sections.map((section, i) => (
-				<div className={`${themeA} ${print}`} key={`section-${i}`}>
+				<div className={`themeA ${styles.print}`} key={`section-${i}`}>
 					<Slide style={{ width: '100%', height: '100%', overflow: 'hidden' }}>{section.source}</Slide>
 					<div style={{ pageBreakAfter: 'always' }}></div>
 				</div>

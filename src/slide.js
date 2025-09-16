@@ -1,7 +1,7 @@
 import React, { useEffect, useState, createContext, useContext, memo } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import { slide, innerSlide } from './app.css.ts';
+
 import mermaid from 'mermaid';
 import confetti from 'canvas-confetti';
 import { Tweet } from "mdx-embed/dist/components/twitter";
@@ -93,7 +93,7 @@ const InnerSlide = memo(({ children }) => {
   })();
  }, [children]);
 
-	return <div className={innerSlide}>
+ 	return <div className="innerSlide">
     {MDX}
 	</div>;
 });
@@ -120,8 +120,8 @@ const Slide = ({ children, style }) => {
 		return () => document.removeEventListener('keyup', eventListener);
 	}, []);
 
-	return (
-		<div style={style} className={slide}>
+ 	return (
+		<div style={style} className="slide">
 			<RevealContext.Provider value={{
 				currentReveal,
 			}}>

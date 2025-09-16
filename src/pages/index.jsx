@@ -3,11 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import html2canvas from 'html2canvas';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
-import { container } from '../app.css.ts';
+import styles from '../app.module.css';
 import Slide from '../slide';
 import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
-import { statusIndicator, statusIndicatorProgress, themeA, present } from '../app.css.ts';
 
 const Preview = ({ children }) => {
 	const ref = useRef(null);
@@ -73,12 +72,12 @@ const HomePage = () => {
 	if (error) return <div>Error: {error.message}</div>;
 	if (!doc) return <div>No document loaded</div>;
 
-	return <div className={`${themeA} ${present}`}>
+	return <div className={`themeA ${styles.present}`}>
 		<CMDK>
 			<Command.Item onSelect={startPresentation}>Start presentation</Command.Item>
 			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>
 		</CMDK>
-		<div className={container}>
+		<div className={styles.container}>
 			<a href="/present">Start presentation</a>&nbsp;
 			<a href="/print">Open for print</a>&nbsp;
 			<span>Hit cmd+k for more actions</span>
@@ -98,7 +97,7 @@ const HomePage = () => {
 				<Slide style={{ width: '60vw', height: '60vh' }}>{doc.sections[currentSlide]?.source}</Slide>
 			</div>
 		</div>
-		<div className={container}>
+		<div className={styles.container}>
 			<button onClick={prev}>Prev</button>
 			<span>{currentSlide}</span>
 			<button onClick={next}>Next</button>

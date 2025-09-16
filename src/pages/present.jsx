@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import Slide from '../slide';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
-import { statusIndicator, statusIndicatorProgress, themeA, present } from '../app.css.ts';
+import styles from '../app.module.css';
 import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
 import { useBroadcast, useBroadcastListen } from '../useBroadcast';
@@ -24,8 +24,8 @@ const StatusIndicator = ({ doc, currentSlide }) => {
 	const max = doc.sections.length - 1;
 	const progress = currentSlide / max * 100;
 
-	return <div className={ statusIndicator }>
-		<div className={ statusIndicatorProgress } style={{ width: `${progress}vw` }} />
+	return <div className={ styles.statusIndicator }>
+		<div className={ styles.statusIndicatorProgress } style={{ width: `${progress}vw` }} />
 	</div>
 }
 
@@ -61,7 +61,7 @@ const Present = () => {
 	if (error) return <div>Error: {error.message}</div>;
 	if (!doc) return <div>No document loaded</div>;
 
-	return <div className={`${themeA} ${present}`}>
+	return <div className={`themeA ${styles.present}`}>
 		<CMDK>
 			<Command.Item onSelect={openOverview}>Open overview</Command.Item>
 			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>

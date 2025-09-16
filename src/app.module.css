@@ -1,0 +1,37 @@
+.container {
+  padding: 10px;
+  background: lightgray;
+}
+
+.statusIndicator {
+  height: 1vh;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+.statusIndicatorProgress {
+  height: 100%;
+  background: lightgrey;
+  left: 0;
+  transition: width 1s;
+}
+
+.present {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+.print {
+  margin-bottom: 5px;
+  width: 1856px; /* 1280*1.45 */
+  height: 1044px; /* 720*1.45 */
+  color-adjust: exact;
+}

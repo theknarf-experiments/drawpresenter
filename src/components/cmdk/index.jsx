@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Command } from 'cmdk';
-import { cmdk } from './cmdk.css.ts';
+import styles from './cmdk.module.css';
 
 const CommandMenu = ({ children }) => {
   const [open, setOpen] = useState(false);
@@ -28,7 +28,7 @@ const CommandMenu = ({ children }) => {
 
   return (
 		<>
-			<div className={cmdk} ref={containerElement} />
+			<div className={styles.cmdk} ref={containerElement} />
 			<Command.Dialog
 				open={open}
 				onOpenChange={setOpen}
