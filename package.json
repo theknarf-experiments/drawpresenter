@@ -1,7 +1,7 @@
 {
   "name": "drawpresenter",
   "scripts": {
-    "start": "./src/cli.ts start",
+    "start": "tsx ./src/cli.ts start",
     "dev": "nodemon --exec tsx --ext ts,tsx,json ./src/cli.ts start",
     "typecheck": "tsc --noEmit"
   },
