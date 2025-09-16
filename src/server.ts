@@ -11,7 +11,7 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 	// when using middleware `hostname` and `port` must be provided below
 	const app = next({
 		dev,
-		dir: __dirname,
+		dir: path.join(__dirname, '..'),
 		hostname,
 		port,
     turbo: false,
