@@ -20,7 +20,7 @@ const StatusIndicator = ({ doc, currentSlide }) => {
 const Timer = () => {
 	const currentTime = () => (new Date()).getTime();
 	const [ timerStartedAt, setStart ] = useState(currentTime());
-	const [ time, setTime ] = useState();
+	const [ time, setTime ] = useState(0);
 
 	// stolen from: https://stackoverflow.com/a/63704355
 	const formatDuration = totalSeconds => {

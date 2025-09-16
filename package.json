@@ -1,8 +1,9 @@
 {
   "name": "drawpresenter",
   "scripts": {
-    "start": "./src/cli.js start",
-    "dev": "nodemon ./src/cli.js start"
+    "start": "./src/cli.ts start",
+    "dev": "nodemon --exec tsx --ext ts,tsx,json ./src/cli.ts start",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@mdx-js/mdx": "^3.1.1",
@@ -23,9 +24,19 @@
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/express": "^5.0.3",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "babel-loader": "^10.0.0",
     "node-polyfill-webpack-plugin": "^4.1.0",
     "nodemon": "^2.0.22",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.0.0",
     "webpack-merge": "^6.0.1"
   },
   "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"

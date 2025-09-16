@@ -1,11 +1,11 @@
-const { createServer } = require('http');
-const { parse } = require('url');
-const next = require('next');
-const path = require('path');
-const express = require('express');
-const { openDocument } = require('./document');
+import { createServer } from 'http';
+import { parse } from 'url';
+import next from 'next';
+import path from 'path';
+import express, { Request, Response, NextFunction } from 'express';
+import { openDocument, Document } from './document';
 
-const start = async (projectFile, dev = false, hostname = 'localhost', port = 3000) => {
+const start = async (projectFile: string, dev: boolean = false, hostname: string = 'localhost', port: number = 3000): Promise<void> => {
 	// -- Setting up Next.js --
 
 	// when using middleware `hostname` and `port` must be provided below
@@ -28,7 +28,7 @@ const start = async (projectFile, dev = false, hostname = 'localhost', port = 30
 	console.log(projectPath);
 	server.use('/files', express.static(projectPath))
 
-  server.use('/doc', async (req, res, next) => {
+  server.use('/doc', async (req: Request, res: Response, next: NextFunction) => {
     console.log(`/doc ${projectFile}`);
     const doc = await openDocument(projectFile);
 
@@ -37,7 +37,7 @@ const start = async (projectFile, dev = false, hostname = 'localhost', port = 30
     }));
   });
 
-	server.use(async (req, res, next) => {
+	server.use(async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			const parsedUrl = parse(req.url, true);
 			const { pathname, query } = parsedUrl;
@@ -56,4 +56,4 @@ const start = async (projectFile, dev = false, hostname = 'localhost', port = 30
 	});
 }
 
-module.exports = start;
+export default start;

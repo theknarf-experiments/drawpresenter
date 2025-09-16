@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-const { program } = require('commander');
-const start = require('./server');
+import { program } from 'commander';
+import start from './server';
 
 const dev = process.env.NODE_ENV !== 'production';
 
@@ -13,7 +13,7 @@ program
 	.command('start')
 	.argument('<file>', 'Markdown file uses for the presentation')
   .description('Start the application')
-  .action(async (file, options) => {
+  .action(async (file: string, options: any) => {
 		start(file, dev);
 	});
 

@@ -8,7 +8,7 @@ import { Command } from 'cmdk';
 import { useBroadcast, useBroadcastListen } from '../useBroadcast';
 
 const openFullscreen = () => {
-	const elem = document.documentElement;
+	const elem = document.documentElement as any;
   if (elem.requestFullscreen) {
     elem.requestFullscreen();
   } else if (elem.webkitRequestFullscreen) { /* Safari */

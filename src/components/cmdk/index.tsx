@@ -29,14 +29,18 @@ const CommandMenu = ({ children }) => {
   return (
 		<>
 			<div className={styles.cmdk} ref={containerElement} />
+			{/* @ts-ignore */}
 			<Command.Dialog
 				open={open}
 				onOpenChange={setOpen}
 				onKeyDown={onKeyDown}
 				label="Global Command Menu"
 				container={containerElement.current}>
+				{/* @ts-ignore */}
 				<Command.Input />
+				{/* @ts-ignore */}
 				<Command.List>
+					{/* @ts-ignore */}
 					<Command.Empty>No results found.</Command.Empty>
 					{children}
 				</Command.List>

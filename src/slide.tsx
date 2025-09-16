@@ -15,7 +15,7 @@ mermaid.initialize({
   securityLevel: 'loose',
 });
 
-class Mermaid extends React.Component {
+class Mermaid extends React.Component<{ children: React.ReactNode }> {
   componentDidMount() {
     mermaid.contentLoaded();
   }
@@ -25,7 +25,7 @@ class Mermaid extends React.Component {
 }
 
 
-const code = ({ className, children, ...props}) => {
+const code = ({ className, children, ...props }: { className?: string; children: string; [key: string]: any }) => {
 	const match = /language-(\w+)/.exec(className || '');
 
 	// Remove extra newlines in the beginnign or end
@@ -44,7 +44,7 @@ const code = ({ className, children, ...props}) => {
 	}
 }
 
-const img = ({ src, ...props }) => {
+const img = ({ src, ...props }: { src: string; [key: string]: any }) => {
 	const newSrc = src.replace(/^\./, '/files/');
 
 	return <img
@@ -53,18 +53,18 @@ const img = ({ src, ...props }) => {
 		/>
 }
 
-const RevealContext = createContext(null);
+const RevealContext = createContext<{ currentReveal: number } | null>(null);
 
-const useReveal = (currentId) => {
-	const { currentReveal} = useContext(RevealContext);
-	const show = currentReveal >= currentId;
+const useReveal = (currentId: number) => {
+	const context = useContext(RevealContext);
+	const show = context ? context.currentReveal >= currentId : false;
 
-	//console.log(`currentReveal: ${currentReveal}, currentId: ${currentId}, show: ${show}`);
+	//console.log(`currentReveal: ${context?.currentReveal}, currentId: ${currentId}, show: ${show}`);
 
 	return [show];
 }
 
-const Reveal = ({ children, currentId, style }) => {
+const Reveal = ({ children, currentId, style }: { children: React.ReactNode; currentId: number; style?: React.CSSProperties }) => {
 	const [show] = useReveal(currentId);
 
 	return <span style={{
@@ -81,24 +81,25 @@ const MDXComponents = {
 	Reveal,
 };
 
-const InnerSlide = memo(({ children }) => {
-  const [ MDX, setMDX ] = useState(null);
+const InnerSlide = memo(({ children }: { children: string }) => {
+  const [ MDX, setMDX ] = useState<React.ReactElement | null>(null);
 
- useEffect(() => {
+  useEffect(() => {
   (async () => {
-    const { default: MDX } = await evaluate(children, { ...runtime, useMDXComponents: () => MDXComponents });
-    const content = MDX();
+    // @ts-ignore
+    const { default: MDX } = await evaluate(children, { ...runtime, components: MDXComponents });
+    const content = MDX({});
 
     setMDX(content);
   })();
- }, [children]);
+}, [children]);
 
  	return <div className="innerSlide">
     {MDX}
 	</div>;
 });
 
-const Slide = ({ children, style }) => {
+const Slide = ({ children, style }: { children: string; style?: React.CSSProperties }) => {
 	useEffect(() => {
 		if(typeof window !== "undefined") {
 			window.confetti = confetti;
@@ -108,7 +109,7 @@ const Slide = ({ children, style }) => {
 	const [currentReveal, setCurrentReveal] = useState(0);
 
 	useEffect(() => {
-		const eventListener = (e) => {
+		const eventListener = (e: KeyboardEvent) => {
 			if(e.key === 'ArrowUp') {
 				setCurrentReveal(c => (c - 1) > 0 ? c - 1 : 0);
 			} else if (e.key === 'ArrowDown') {
