@@ -46,9 +46,19 @@ const parse = (text: string, filePath: string): Document => {
 		}
 	}
 
-	const sectionObjects: Section[] = sections.map(section => ({
-		source: section,
-	}));
+	const sectionObjects: Section[] = sections.map(section => {
+		let source = section;
+		// Rewrite image src to use /files/ for relative paths
+		source = source.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
+			if (!src.startsWith('http') && !src.startsWith('/')) {
+				src = '/files/' + src;
+			}
+			return `![${alt}](${src})`;
+		});
+		return {
+			source,
+		};
+	});
 
 	//console.log(sections)
 

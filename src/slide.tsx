@@ -45,7 +45,10 @@ const code = ({ className, children, ...props }: { className?: string; children:
 }
 
 const img = ({ src, ...props }: { src: string; [key: string]: any }) => {
-	const newSrc = src.replace(/^\./, '/files/');
+	let newSrc = src;
+	if (!src.startsWith('http') && !src.startsWith('/')) {
+		newSrc = '/files/' + src;
+	}
 
 	return <img
 		src={newSrc}

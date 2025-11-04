@@ -24,7 +24,7 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 
 	const server = express();
 
-	const projectPath = path.dirname(projectFile);
+	const projectPath = path.dirname(path.resolve(projectFile));
 	console.log(projectPath);
 	server.use('/files', express.static(projectPath))
 
@@ -50,10 +50,12 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 		}
 	});
 
-	server.listen(port, (err) => {
-		if (err) throw err;
-		console.log(`> Ready on http://${hostname}:${port}`);
-	});
+  server.listen(port, (err) => {
+    if (err) throw err;
+    console.log(`> Ready on http://${hostname}:${port}`);
+  });
+
+  return new Promise(() => {}); // Keep the process running
 }
 
 export default start;

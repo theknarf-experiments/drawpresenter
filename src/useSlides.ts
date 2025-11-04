@@ -1,4 +1,4 @@
-import { useReducer, useEffect } from 'react';
+import { useReducer, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Document } from './document';
 
@@ -55,15 +55,21 @@ const useSlides = (config: UseSlidesConfig = {}): [number, SlideActions, Documen
 		return newState;
 	}, 0);
 
+	const hasInitializedFromHash = useRef(false);
+
 	useEffect(() => {
-		if(config?.hashRouting && typeof window !== "undefined") {
-			const match = window.location.hash.match(/^#(?<num>.*)$/);
-			const value = match?.groups?.num ? parseInt(match.groups.num) : 0;
-			if(value !== 0) {
-				dispatch({ type: 'goto', value })
-			}
+		if (!config?.hashRouting) return;
+		if (typeof window === "undefined") return;
+		if (!doc) return;
+		if (hasInitializedFromHash.current) return;
+
+		const match = window.location.hash.match(/^#(?<num>\d+)$/);
+		const rawValue = match?.groups?.num ? parseInt(match.groups.num, 10) : 0;
+		hasInitializedFromHash.current = true;
+		if (!Number.isNaN(rawValue)) {
+			dispatch({ type: 'goto', value: rawValue });
 		}
-	}, []);
+	}, [config?.hashRouting, doc]);
 	
 	return [
 		state,

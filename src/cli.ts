@@ -12,9 +12,9 @@ program
 program
 	.command('start')
 	.argument('<file>', 'Markdown file uses for the presentation')
-  .description('Start the application')
-  .action(async (file: string, options: any) => {
-		start(file, dev);
+   .description('Start the application')
+   .action(async (file: string, options: any) => {
+		return start(file, dev);
 	});
 
 program.parse();
