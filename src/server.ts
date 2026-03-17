@@ -1,7 +1,7 @@
 import path from 'path';
 import { watch } from 'fs';
 import express, { Request, Response, NextFunction } from 'express';
-import { openDocument, addSlideAfter } from './document';
+import { openDocument, addSlideAfter, updateFrontmatter } from './document';
 
 const start = async (projectFile: string, dev: boolean = false, hostname: string = 'localhost', port: number = 3000): Promise<void> => {
 	const server = express();
@@ -56,6 +56,14 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 	server.post('/doc/add-slide', async (req: Request, res: Response) => {
 		const { afterIndex } = req.body;
 		const doc = await addSlideAfter(projectFile, afterIndex);
+
+		res.json({ doc });
+		notifyClients();
+	});
+
+	server.post('/doc/frontmatter', async (req: Request, res: Response) => {
+		const { frontmatter } = req.body;
+		const doc = await updateFrontmatter(projectFile, frontmatter);
 
 		res.json({ doc });
 		notifyClients();

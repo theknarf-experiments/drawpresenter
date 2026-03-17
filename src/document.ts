@@ -134,4 +134,47 @@ export const addSlideAfter = async (filePath: string, afterIndex: number): Promi
 	return parse(newContent, filePath);
 }
 
+export const updateFrontmatter = async (filePath: string, frontmatter: Frontmatter): Promise<Document> => {
+	const file = await readFile(filePath, 'utf-8');
+	const newYaml = yaml.dump(frontmatter, { indent: 4 }).trimEnd();
+
+	// Check if the file already has frontmatter (starts with --- or has empty first line then ---)
+	const frontmatterRegex = /^(---\n[\s\S]*?\n---\n|[\s\S]*?\n---\n)/;
+	const lines = file.split('\n');
+
+	let newContent: string;
+
+	// Detect existing frontmatter format
+	if (lines[0] === '---') {
+		// Format: ---\nyaml\n---\n...
+		const closingIndex = lines.indexOf('---', 1);
+		if (closingIndex !== -1) {
+			const after = lines.slice(closingIndex + 1).join('\n');
+			newContent = `---\n${newYaml}\n---\n${after}`;
+		} else {
+			newContent = `---\n${newYaml}\n---\n${file}`;
+		}
+	} else {
+		// Try parsing first section as yaml (format without leading ---)
+		const sections = file.split(/-{3}(?:\r\n|\r|\n)/);
+		if (sections[0] !== '') {
+			try {
+				yaml.load(sections[0]);
+				// First section is valid yaml frontmatter, replace it
+				const after = sections.slice(1).join('---\n');
+				newContent = `${newYaml}\n---\n${after}`;
+			} catch {
+				// No frontmatter, prepend it
+				newContent = `---\n${newYaml}\n---\n${file}`;
+			}
+		} else {
+			// No frontmatter, prepend it
+			newContent = `---\n${newYaml}\n---\n${file}`;
+		}
+	}
+
+	await writeFile(filePath, newContent, 'utf-8');
+	return parse(newContent, filePath);
+}
+
 export { parse, serialize };
