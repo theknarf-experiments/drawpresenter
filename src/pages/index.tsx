@@ -412,8 +412,13 @@ const ScaledSlide = ({ children, slideIndex, fonts, cornerImage, selection, setS
 	drawMode?: boolean; drawColor?: string; drawSize?: number;
 }) => {
 	const counters = useRef<Map<string, number>>(new Map());
-	const [pendingStrokes, setPendingStrokes] = useState<StrokeData[]>([]);
 	counters.current.clear();
+
+	// Parse existing drawing strokes from the slide source
+	const existingDrawingMatch = children.match(/<Drawing\s+data='([^']*)'\s*\/>/);
+	const existingStrokes: StrokeData[] = existingDrawingMatch
+		? (() => { try { return JSON.parse(existingDrawingMatch[1]); } catch { return []; } })()
+		: [];
 
 	const withCounter = (Component: any) => (props: any) => {
 		const text = extractText(props.children);
@@ -444,10 +449,8 @@ const ScaledSlide = ({ children, slideIndex, fonts, cornerImage, selection, setS
 
 	const handleStrokeComplete = (points: number[][]) => {
 		const stroke: StrokeData = { points, color: drawColor || 'red', size: drawSize || 2 };
-		const newStrokes = [...pendingStrokes, stroke];
-		setPendingStrokes(newStrokes);
+		const newStrokes = [...existingStrokes, stroke];
 
-		// Update the markdown with a <Drawing> component
 		const dataJson = JSON.stringify(newStrokes);
 		const drawingTag = `<Drawing data='${dataJson}' />`;
 
@@ -464,7 +467,7 @@ const ScaledSlide = ({ children, slideIndex, fonts, cornerImage, selection, setS
 
 	const overlay = drawMode ? <DrawingOverlay
 		slideIndex={slideIndex}
-		strokes={pendingStrokes}
+		strokes={existingStrokes}
 		enabled={true}
 		color={drawColor}
 		size={drawSize}
