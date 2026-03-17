@@ -1,6 +1,6 @@
 import { useReducer, useEffect, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Document } from './document';
+import useDoc from './useDoc';
 
 export interface SlideActions {
   next: () => void;
@@ -13,28 +13,7 @@ interface UseSlidesConfig {
 }
 
 const useSlides = (config: UseSlidesConfig = {}): [number, SlideActions, Document | undefined, boolean, Error | null] => {
-	const queryClient = useQueryClient();
-	const { data: doc, isLoading, error } = useQuery({
-		queryKey: ['doc'],
-		queryFn: () => fetch('/doc').then(res => res.json()).then(data => data.doc)
-	});
-
-	// Listen to SSE for document changes
-	useEffect(() => {
-		const eventSource = new EventSource('/doc/events');
-		eventSource.onmessage = () => {
-			queryClient.invalidateQueries({ queryKey: ['doc'] });
-		};
-		return () => eventSource.close();
-	}, [queryClient]);
-
-	useEffect(() => {
-		if (doc?.frontmatter?.colors) {
-			Object.entries(doc.frontmatter.colors).forEach(([key, value]) => {
-				document.documentElement.style.setProperty(`--${key}`, String(value));
-			});
-		}
-	}, [doc]);
+	const [doc, isLoading, error] = useDoc();
 
 	const max = doc && doc.sections ? doc.sections.length - 1 : 0;
 	const clamp = (value: number, min: number, max: number): number => {
@@ -80,7 +59,7 @@ const useSlides = (config: UseSlidesConfig = {}): [number, SlideActions, Documen
 			dispatch({ type: 'goto', value: rawValue });
 		}
 	}, [config?.hashRouting, doc]);
-	
+
 	return [
 		state,
 		{
@@ -90,7 +69,7 @@ const useSlides = (config: UseSlidesConfig = {}): [number, SlideActions, Documen
 		},
 		doc,
 		isLoading,
-		error
+		error,
 	];
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, ViewTransition } from 'react';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
 import styles from '../app.module.css';
@@ -7,6 +7,14 @@ import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
 import { Frontmatter } from '../document';
 import { Button, LinkButton } from '../components/button';
+import ContextMenu from '../components/context-menu';
+
+const patchDoc = (operations: any[]) =>
+	fetch('/doc', {
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(operations),
+	});
 
 const Preview = ({ children }) => {
 	return <div style={{
@@ -125,16 +133,8 @@ const ScaledSlide = ({ children }: { children: string }) => {
 	</div>;
 }
 
-const AddSlideButton = ({ afterIndex }: { afterIndex: number }) => {
-	const addSlide = async () => {
-		await fetch('/doc/add-slide', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ afterIndex }),
-		});
-	};
-
-	return <button onClick={addSlide} style={{
+const AddSlideButton = ({ onClick }: { onClick: () => void }) => {
+	return <button onClick={onClick} style={{
 		width: 256,
 		marginLeft: 5,
 		padding: '4px',
@@ -147,11 +147,18 @@ const AddSlideButton = ({ afterIndex }: { afterIndex: number }) => {
 
 const HomePage = () => {
 	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides();
+	const deleteSlide = (index: number) => {
+		if (!doc || doc.sections.length <= 1) return;
+		patchDoc([{ op: 'remove', path: `/sections/${index}` }]);
+		if (index > 0) prev();
+	};
+
 	useKeybindings({
 		'ArrowDown': next,
 		'ArrowRight': next,
 		'ArrowUp': prev,
 		'ArrowLeft': prev,
+		'Backspace': () => deleteSlide(currentSlide),
 	});
 
 	const startPresentation = () => {
@@ -181,16 +188,27 @@ const HomePage = () => {
 			<div style={{ overflow: 'auto', padding: '10px' }}>
 			{
 				doc.sections.map((section, i) => (
-					<div key={`section-${i}`}>
-						<div style={{ display: 'flex' }} onClick={() => goto(i)}>
-							<span>{i}</span>
-							<Preview>{section.source}</Preview>
+					<ViewTransition key={section.id} exit="slide-out" enter="slide-in">
+						<div>
+							<ContextMenu onOpen={() => goto(i)} items={[
+								{ label: 'Insert slide above', onClick: () => patchDoc([{ op: 'add', path: `/sections/${i}`, value: { source: '\n# New slide\n\n' } }]) },
+								{ label: 'Insert slide below', onClick: () => patchDoc([{ op: 'add', path: `/sections/${i + 1}`, value: { source: '\n# New slide\n\n' } }]) },
+								{ label: 'Duplicate', onClick: () => patchDoc([{ op: 'add', path: `/sections/${i + 1}`, value: { source: section.source } }]) },
+								{ label: 'Delete slide', onClick: () => deleteSlide(i) },
+								{ label: 'Present from here', onClick: () => { window.location.href = `/present#${i}`; } },
+							]}>
+								<div className={i === currentSlide ? styles.slideThumbActive : styles.slideThumb}
+									onClick={() => goto(i)}>
+									<span>{i}</span>
+									<Preview>{section.source}</Preview>
+								</div>
+							</ContextMenu>
+							<div style={{ display: 'flex' }}>
+								<span style={{ visibility: 'hidden' }}>{i}</span>
+								<AddSlideButton onClick={() => patchDoc([{ op: 'add', path: `/sections/${i + 1}`, value: { source: '\n# New slide\n\n' } }])} />
+							</div>
 						</div>
-						<div style={{ display: 'flex' }}>
-							<span style={{ visibility: 'hidden' }}>{i}</span>
-							<AddSlideButton afterIndex={i} />
-						</div>
-					</div>
+					</ViewTransition>
 				))
 			}
 			</div>

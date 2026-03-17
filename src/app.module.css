@@ -29,6 +29,27 @@
   top: 0;
 }
 
+.slideThumb {
+  display: flex;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  outline: 2px solid transparent;
+}
+
+.slideThumb:hover {
+  outline-color: #99c2ff;
+}
+
+.slideThumbActive {
+  composes: slideThumb;
+  outline-color: #0066ff;
+}
+
+.slideThumbActive:hover {
+  outline-color: #0066ff;
+}
+
 .print {
   margin-bottom: 5px;
   width: 1856px; /* 1280*1.45 */

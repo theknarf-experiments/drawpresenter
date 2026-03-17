@@ -1,4 +1,5 @@
 import { readFile, writeFile } from 'fs/promises';
+import { randomUUID } from 'crypto';
 import * as yaml from 'js-yaml';
 import { applyPatch, Operation } from 'fast-json-patch';
 
@@ -12,6 +13,7 @@ export interface Frontmatter {
 }
 
 export interface Section {
+  id: string;
   source: string;
 }
 
@@ -54,6 +56,7 @@ const parse = (text: string, filePath: string): Document => {
 	}
 
 	const sectionObjects: Section[] = sections.map(section => ({
+		id: randomUUID(),
 		source: section,
 	}));
 
@@ -92,13 +95,19 @@ const saveDocument = async (doc: Document): Promise<void> => {
 	await writeFile(doc.filePath, serialize(doc), 'utf-8');
 }
 
-export const patchDocument = async (filePath: string, operations: Operation[]): Promise<Document> => {
-	const doc = await openDocument(filePath);
+export const patchDocument = async (filePath: string, operations: Operation[], existingDoc?: Document): Promise<Document> => {
+	const doc = existingDoc || await openDocument(filePath);
 	const { frontmatter, sections } = doc;
 
 	// Apply patch to the mutable parts (not filePath)
 	const patchable = { frontmatter, sections };
 	applyPatch(patchable, operations);
+
+	// Ensure all sections have IDs (new sections from add won't)
+	patchable.sections = patchable.sections.map(s => ({
+		...s,
+		id: s.id || randomUUID(),
+	}));
 
 	const patched: Document = {
 		filePath: doc.filePath,
@@ -110,16 +119,16 @@ export const patchDocument = async (filePath: string, operations: Operation[]): 
 	return patched;
 }
 
-export const addSlideAfter = async (filePath: string, afterIndex: number): Promise<Document> => {
+export const addSlideAfter = async (filePath: string, afterIndex: number, existingDoc?: Document): Promise<Document> => {
 	return patchDocument(filePath, [
 		{ op: 'add', path: `/sections/${afterIndex + 1}`, value: { source: '\n# New slide\n\n' } },
-	]);
+	], existingDoc);
 }
 
-export const updateFrontmatter = async (filePath: string, frontmatter: Frontmatter): Promise<Document> => {
+export const updateFrontmatter = async (filePath: string, frontmatter: Frontmatter, existingDoc?: Document): Promise<Document> => {
 	return patchDocument(filePath, [
 		{ op: 'replace', path: '/frontmatter', value: frontmatter },
-	]);
+	], existingDoc);
 }
 
 export { parse, serialize };

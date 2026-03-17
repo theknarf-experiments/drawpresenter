@@ -1,24 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import Slide from '../slide';
 import styles from '../app.module.css';
+import useDoc from '../useDoc';
 
 const Present = () => {
-	const { data: doc, isLoading, error } = useQuery({
-		queryKey: ['doc'],
-		queryFn: () => fetch('/doc').then(res => res.json()).then(data => data.doc)
-	});
-
-	useEffect(() => {
-		if (doc?.frontmatter?.colors) {
-			Object.entries(doc.frontmatter.colors).forEach(([key, value]) => {
-				document.documentElement.style.setProperty(`--${key}`, String(value));
-			});
-		}
-	}, [doc]);
+	const [doc, isLoading, error] = useDoc();
 
 	if (isLoading) return <div>Loading...</div>;
-	if (error) return <div>Error: {(error as Error).message}</div>;
+	if (error) return <div>Error: {error.message}</div>;
 	if (!doc) return <div>No document loaded</div>;
 	return <div>
 		{

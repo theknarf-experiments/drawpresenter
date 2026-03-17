@@ -1,7 +1,7 @@
 import path from 'path';
 import { watch } from 'fs';
 import express, { Request, Response, NextFunction } from 'express';
-import { openDocument, addSlideAfter, updateFrontmatter, patchDocument } from './document';
+import { openDocument, addSlideAfter, updateFrontmatter, patchDocument, Document, Section } from './document';
 
 const start = async (projectFile: string, dev: boolean = false, hostname: string = 'localhost', port: number = 3000): Promise<void> => {
 	const server = express();
@@ -12,23 +12,61 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 
 	server.use(express.json());
 
+	// Keep cached doc for stable IDs across re-parses
+	let cachedDoc: Document | null = null;
+
+	const getDoc = async (): Promise<Document> => {
+		const doc = await openDocument(projectFile);
+		if (cachedDoc) {
+			// Preserve IDs for sections whose content matches
+			const usedIds = new Set<string>();
+			doc.sections = doc.sections.map(s => {
+				const match = cachedDoc!.sections.find(
+					p => p.source === s.source && !usedIds.has(p.id)
+				);
+				if (match) {
+					usedIds.add(match.id);
+					return { ...s, id: match.id };
+				}
+				return s; // keeps the new UUID from parse
+			});
+		}
+		cachedDoc = doc;
+		return doc;
+	};
+
+	const updateCache = (doc: Document) => {
+		cachedDoc = doc;
+	};
+
 	// SSE: track connected clients
 	const sseClients = new Set<Response>();
 
-	const notifyClients = () => {
+	const notifyClients = (doc: Document) => {
+		const data = JSON.stringify(doc);
 		for (const client of sseClients) {
-			client.write(`data: changed\n\n`);
+			client.write(`data: ${data}\n\n`);
 		}
 	};
 
 	// Watch the project file for external changes
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+	let suppressWatcher = false;
+
+	const notifyAndSuppress = (doc: Document) => {
+		suppressWatcher = true;
+		notifyClients(doc);
+		// Allow watcher again after debounce window
+		setTimeout(() => { suppressWatcher = false; }, 200);
+	};
+
 	watch(path.resolve(projectFile), () => {
-		// Debounce to avoid rapid duplicate events
 		if (debounceTimer) clearTimeout(debounceTimer);
-		debounceTimer = setTimeout(() => {
-			console.log('File changed, notifying clients');
-			notifyClients();
+		debounceTimer = setTimeout(async () => {
+			if (suppressWatcher) return;
+			console.log('File changed externally, notifying clients');
+			const doc = await getDoc();
+			notifyClients(doc);
 		}, 100);
 	});
 
@@ -47,34 +85,38 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 	});
 
 	server.get('/doc', async (req: Request, res: Response) => {
-		console.log(`/doc ${projectFile}`);
-		const doc = await openDocument(projectFile);
-
+		const doc = await getDoc();
 		res.json({ doc });
 	});
 
 	server.post('/doc/add-slide', async (req: Request, res: Response) => {
 		const { afterIndex } = req.body;
-		const doc = await addSlideAfter(projectFile, afterIndex);
+		const existing = cachedDoc || await getDoc();
+		const doc = await addSlideAfter(projectFile, afterIndex, existing);
+		updateCache(doc);
 
 		res.json({ doc });
-		notifyClients();
+		notifyAndSuppress(doc);
 	});
 
 	server.post('/doc/frontmatter', async (req: Request, res: Response) => {
 		const { frontmatter } = req.body;
-		const doc = await updateFrontmatter(projectFile, frontmatter);
+		const existing = cachedDoc || await getDoc();
+		const doc = await updateFrontmatter(projectFile, frontmatter, existing);
+		updateCache(doc);
 
 		res.json({ doc });
-		notifyClients();
+		notifyAndSuppress(doc);
 	});
 
 	server.patch('/doc', async (req: Request, res: Response) => {
 		const operations = req.body;
-		const doc = await patchDocument(projectFile, operations);
+		const existing = cachedDoc || await getDoc();
+		const doc = await patchDocument(projectFile, operations, existing);
+		updateCache(doc);
 
 		res.json({ doc });
-		notifyClients();
+		notifyAndSuppress(doc);
 	});
 
 	if (dev) {
