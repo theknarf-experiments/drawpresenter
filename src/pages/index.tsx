@@ -1,10 +1,10 @@
-import { useRef, useEffect } from 'react';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
 import styles from '../app.module.css';
 import Slide from '../slide';
 import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
+import { useQueryClient } from '@tanstack/react-query';
 
 const Preview = ({ children }) => {
 	return <div style={{
@@ -21,6 +21,26 @@ const Preview = ({ children }) => {
 			<Slide style={{ width: 1280, height: 720, fontSize: '14px' }}>{children}</Slide>
 		</div>
 	</div>;
+}
+
+const AddSlideButton = ({ afterIndex }: { afterIndex: number }) => {
+	const queryClient = useQueryClient();
+
+	const addSlide = async () => {
+		await fetch('/doc/add-slide', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ afterIndex }),
+		});
+		queryClient.invalidateQueries({ queryKey: ['doc'] });
+	};
+
+	return <button onClick={addSlide} style={{
+		width: '100%',
+		padding: '4px',
+		cursor: 'pointer',
+		opacity: 0.5,
+	}}>+ Add slide</button>;
 }
 
 const HomePage = () => {
@@ -57,9 +77,12 @@ const HomePage = () => {
 			<div style={{ margin: '10px', border: '1px solid black', overflow: 'scroll', height: '765px' }}>
 			{
 				doc.sections.map((section, i) => (
-					<div style={{ display: 'flex' }} key={`section-${i}`} onClick={() => goto(i)}>
-						<span>{i}</span>
-						<Preview>{section.source}</Preview>
+					<div key={`section-${i}`}>
+						<div style={{ display: 'flex' }} onClick={() => goto(i)}>
+							<span>{i}</span>
+							<Preview>{section.source}</Preview>
+						</div>
+						<AddSlideButton afterIndex={i} />
 					</div>
 				))
 			}

@@ -1,6 +1,6 @@
 import path from 'path';
 import express, { Request, Response, NextFunction } from 'express';
-import { openDocument } from './document';
+import { openDocument, addSlideAfter } from './document';
 
 const start = async (projectFile: string, dev: boolean = false, hostname: string = 'localhost', port: number = 3000): Promise<void> => {
 	const server = express();
@@ -9,13 +9,20 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 	console.log(projectPath);
 	server.use('/files', express.static(projectPath));
 
-	server.use('/doc', async (req: Request, res: Response, next: NextFunction) => {
+	server.use(express.json());
+
+	server.get('/doc', async (req: Request, res: Response) => {
 		console.log(`/doc ${projectFile}`);
 		const doc = await openDocument(projectFile);
 
-		res.send(JSON.stringify({
-			doc,
-		}));
+		res.json({ doc });
+	});
+
+	server.post('/doc/add-slide', async (req: Request, res: Response) => {
+		const { afterIndex } = req.body;
+		const doc = await addSlideAfter(projectFile, afterIndex);
+
+		res.json({ doc });
 	});
 
 	if (dev) {
