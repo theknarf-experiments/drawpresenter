@@ -4,6 +4,7 @@ import getStroke from 'perfect-freehand';
 interface StrokeData {
 	points: number[][];
 	color: string;
+	size: number;
 }
 
 interface DrawingOverlayProps {
@@ -11,6 +12,7 @@ interface DrawingOverlayProps {
 	strokes: StrokeData[] | undefined;
 	enabled: boolean;
 	color?: string;
+	size?: number;
 }
 
 const getSvgPathFromStroke = (stroke: number[][]) => {
@@ -29,7 +31,7 @@ const getSvgPathFromStroke = (stroke: number[][]) => {
 	return d.join(' ');
 };
 
-const DrawingOverlay = ({ slideIndex, strokes = [], enabled, color = 'red' }: DrawingOverlayProps) => {
+const DrawingOverlay = ({ slideIndex, strokes = [], enabled, color = 'red', size = 2 }: DrawingOverlayProps) => {
 	const svgRef = useRef<SVGSVGElement>(null);
 	const [currentStroke, setCurrentStroke] = useState<number[][] | null>(null);
 	const isDrawing = useRef(false);
@@ -60,15 +62,15 @@ const DrawingOverlay = ({ slideIndex, strokes = [], enabled, color = 'red' }: Dr
 		fetch('/doc/drawing', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ slide: slideIndex, stroke: currentStroke, color }),
+			body: JSON.stringify({ slide: slideIndex, stroke: currentStroke, color, size }),
 		});
 
 		setCurrentStroke(null);
 	};
 
-	const renderStroke = (points: number[][], strokeColor: string, key: string) => {
+	const renderStroke = (points: number[][], strokeColor: string, strokeSize: number, key: string) => {
 		const strokePoints = getStroke(points, {
-			size: 2,
+			size: strokeSize,
 			thinning: 0.5,
 			smoothing: 0.5,
 			streamline: 0.5,
@@ -96,8 +98,8 @@ const DrawingOverlay = ({ slideIndex, strokes = [], enabled, color = 'red' }: Dr
 		onTouchStart={(e) => { if (enabled) e.preventDefault(); }}
 		onTouchMove={(e) => { if (enabled) e.preventDefault(); }}
 	>
-		{strokes.map((stroke, i) => renderStroke(stroke.points, stroke.color, `s-${i}`))}
-		{currentStroke && renderStroke(currentStroke, color, 'current')}
+		{strokes.map((stroke, i) => renderStroke(stroke.points, stroke.color, stroke.size, `s-${i}`))}
+		{currentStroke && renderStroke(currentStroke, color, size, 'current')}
 	</svg>;
 };
 

@@ -85,7 +85,7 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 	// Presentation state
 	let presentationSlide = 0;
 	// Drawings: per-slide array of strokes with color (ephemeral, not persisted)
-	interface Stroke { points: number[][]; color: string; }
+	interface Stroke { points: number[][]; color: string; size: number; }
 	const drawings: Map<number, Stroke[]> = new Map();
 
 	// SSE: track connected clients
@@ -193,9 +193,9 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 	});
 
 	server.post('/doc/drawing', async (req: Request, res: Response) => {
-		const { slide, stroke, color = 'red' } = req.body;
+		const { slide, stroke, color = 'red', size = 2 } = req.body;
 		if (!drawings.has(slide)) drawings.set(slide, []);
-		drawings.get(slide)!.push({ points: stroke, color });
+		drawings.get(slide)!.push({ points: stroke, color, size });
 		const doc = history ? getCurrentDoc() : await initHistory();
 		notifyClients(doc);
 		res.json({ ok: true });

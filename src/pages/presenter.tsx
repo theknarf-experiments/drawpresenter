@@ -76,6 +76,7 @@ const Presenter = () => {
 	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides({ hashRouting: true, syncPresentation: true });
 	const [drawMode, setDrawMode] = useState(false);
 	const [drawColor, setDrawColor] = useState('red');
+	const [brushSize, setBrushSize] = useState(2);
 
 	const drawColors = [
 		{ name: 'Red', value: '#ff4444' },
@@ -127,7 +128,7 @@ const Presenter = () => {
 
 				<FittedSlide
 					fonts={doc.frontmatter.fonts}
-					overlay={<DrawingOverlay slideIndex={currentSlide} strokes={slideDrawings} enabled={drawMode} color={drawColor} />}
+					overlay={<DrawingOverlay slideIndex={currentSlide} strokes={slideDrawings} enabled={drawMode} color={drawColor} size={brushSize} />}
 				>{doc.sections[currentSlide]?.source}</FittedSlide>
 			</div>
 			<div style={{ width: '33%', display: 'flex', flexDirection: 'column', minWidth: 0, flexShrink: 0 }}>
@@ -186,6 +187,20 @@ const Presenter = () => {
 							}}
 						/>
 					))}
+					</div>
+					<div style={{ display: 'flex', alignItems: 'center', gap: '0.5em', marginLeft: 'auto' }}>
+						<input
+							type="range"
+							min={1}
+							max={8}
+							step={0.5}
+							value={brushSize}
+							onChange={(e) => setBrushSize(Number(e.target.value))}
+							style={{ width: '80px', accentColor: drawColor }}
+						/>
+						<svg width="24" height="24" viewBox="0 0 24 24">
+							<circle cx="12" cy="12" r={brushSize * 1.5} fill={drawColor} opacity={0.8} />
+						</svg>
 					</div>
 				</div>
 			</div>
