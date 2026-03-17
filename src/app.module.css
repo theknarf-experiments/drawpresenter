@@ -179,6 +179,8 @@
 
 .slideNumber {
   margin-right: 6px;
+  min-width: 1.5em;
+  text-align: right;
 }
 
 .themeSettings {
@@ -214,8 +216,8 @@
 }
 
 .addSlideSpacer {
+  composes: slideNumber;
   visibility: hidden;
-  margin-right: 6px;
 }
 
 .bottomBar {
