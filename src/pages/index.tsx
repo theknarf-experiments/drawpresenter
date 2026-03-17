@@ -8,6 +8,7 @@ import { Command } from 'cmdk';
 import { Frontmatter } from '../document';
 import { Button, LinkButton } from '../components/button';
 import ContextMenu from '../components/context-menu';
+import { parseMarkdown, serializeMarkdown } from '../mdast-utils';
 
 const patchDoc = (operations: any[]) =>
 	fetch('/doc', {
@@ -95,9 +96,15 @@ const EditableH1 = ({ children, source, slideIndex }: { children: React.ReactNod
 	const handleBlur = (e: React.FocusEvent<HTMLHeadingElement>) => {
 		const newText = e.currentTarget.textContent || '';
 		if (newText === text) return;
-		// Replace the first # heading in the markdown source
-		const newSource = source.replace(/^(#\s+)(.*)$/m, `$1${newText}`);
-		if (newSource !== source) {
+
+		const tree = parseMarkdown(source);
+		// Find the first h1 heading in the AST
+		const heading = tree.children.find(
+			(node: any) => node.type === 'heading' && node.depth === 1
+		);
+		if (heading && heading.children?.[0]?.type === 'text') {
+			heading.children[0].value = newText;
+			const newSource = serializeMarkdown(tree);
 			patchDoc([{ op: 'replace', path: `/sections/${slideIndex}/source`, value: newSource }]);
 		}
 	};
