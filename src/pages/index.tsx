@@ -147,6 +147,39 @@ const AddSlideButton = ({ onClick }: { onClick: () => void }) => {
 
 const HomePage = () => {
 	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides();
+	const [dragIndex, setDragIndex] = useState<number | null>(null);
+	const [dropTarget, setDropTarget] = useState<number | null>(null);
+
+	const handleDragStart = (e: React.DragEvent, index: number) => {
+		setDragIndex(index);
+		e.dataTransfer.effectAllowed = 'move';
+	};
+
+	const handleDragOver = (e: React.DragEvent, index: number) => {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = 'move';
+		setDropTarget(index);
+	};
+
+	const handleDragLeave = () => {
+		setDropTarget(null);
+	};
+
+	const handleDrop = (e: React.DragEvent, toIndex: number) => {
+		e.preventDefault();
+		if (dragIndex === null || dragIndex === toIndex) return;
+		patchDoc([
+			{ op: 'move', from: `/sections/${dragIndex}`, path: `/sections/${toIndex}` },
+		]);
+		setDragIndex(null);
+		setDropTarget(null);
+	};
+
+	const handleDragEnd = () => {
+		setDragIndex(null);
+		setDropTarget(null);
+	};
+
 	const deleteSlide = (index: number) => {
 		if (!doc || doc.sections.length <= 1) return;
 		patchDoc([{ op: 'remove', path: `/sections/${index}` }]);
@@ -198,7 +231,18 @@ const HomePage = () => {
 								{ label: 'Present from here', onClick: () => { window.location.href = `/present#${i}`; } },
 							]}>
 								<div className={i === currentSlide ? styles.slideThumbActive : styles.slideThumb}
-									onClick={() => goto(i)}>
+									onClick={() => goto(i)}
+									draggable
+									onDragStart={(e) => handleDragStart(e, i)}
+									onDragOver={(e) => handleDragOver(e, i)}
+									onDragLeave={handleDragLeave}
+									onDrop={(e) => handleDrop(e, i)}
+									onDragEnd={handleDragEnd}
+									style={{
+										opacity: dragIndex === i ? 0.4 : 1,
+										borderTop: dropTarget === i && dragIndex !== null && dragIndex > i ? '3px solid #0066ff' : undefined,
+										borderBottom: dropTarget === i && dragIndex !== null && dragIndex < i ? '3px solid #0066ff' : undefined,
+									}}>
 									<span>{i}</span>
 									<Preview>{section.source}</Preview>
 								</div>
