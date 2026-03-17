@@ -1,7 +1,7 @@
 import path from 'path';
 import { watch } from 'fs';
 import express, { Request, Response, NextFunction } from 'express';
-import { openDocument, addSlideAfter, updateFrontmatter } from './document';
+import { openDocument, addSlideAfter, updateFrontmatter, patchDocument } from './document';
 
 const start = async (projectFile: string, dev: boolean = false, hostname: string = 'localhost', port: number = 3000): Promise<void> => {
 	const server = express();
@@ -64,6 +64,14 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 	server.post('/doc/frontmatter', async (req: Request, res: Response) => {
 		const { frontmatter } = req.body;
 		const doc = await updateFrontmatter(projectFile, frontmatter);
+
+		res.json({ doc });
+		notifyClients();
+	});
+
+	server.patch('/doc', async (req: Request, res: Response) => {
+		const operations = req.body;
+		const doc = await patchDocument(projectFile, operations);
 
 		res.json({ doc });
 		notifyClients();
