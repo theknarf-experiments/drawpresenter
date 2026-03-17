@@ -231,8 +231,7 @@ const HomePage = () => {
 								{ label: 'Delete slide', onClick: () => deleteSlide(i) },
 								{ label: 'Present from here', onClick: () => { window.location.href = `/present#${i}`; } },
 							]}>
-								<div className={i === currentSlide ? styles.slideThumbActive : styles.slideThumb}
-									onClick={() => goto(i)}
+								<div onClick={() => goto(i)}
 									draggable
 									onDragStart={(e) => handleDragStart(e, i)}
 									onDragOver={(e) => handleDragOver(e, i)}
@@ -240,12 +239,17 @@ const HomePage = () => {
 									onDrop={(e) => handleDrop(e, i)}
 									onDragEnd={handleDragEnd}
 									style={{
+										display: 'flex',
+										cursor: 'pointer',
+										marginBottom: '8px',
 										opacity: dragIndex === i ? 0.4 : 1,
 										borderTop: dropTarget === i && dragIndex !== null && dragIndex > i ? '3px solid #0066ff' : undefined,
 										borderBottom: dropTarget === i && dragIndex !== null && dragIndex < i ? '3px solid #0066ff' : undefined,
 									}}>
-									<span>{i}</span>
-									<Preview>{section.source}</Preview>
+									<span style={{ marginRight: '6px' }}>{i}</span>
+									<div className={i === currentSlide ? styles.slideThumbActive : styles.slideThumb}>
+										<Preview>{section.source}</Preview>
+									</div>
 								</div>
 							</ContextMenu>
 						</div>
@@ -253,7 +257,7 @@ const HomePage = () => {
 				))
 			}
 			<div style={{ display: 'flex' }}>
-				<span style={{ visibility: 'hidden' }}>0</span>
+				<span style={{ visibility: 'hidden', marginRight: '6px' }}>0</span>
 				<AddSlideButton onClick={() => patchDoc([{ op: 'add', path: `/sections/-`, value: { source: '\n# New slide\n\n' } }])} />
 			</div>
 			</div>
