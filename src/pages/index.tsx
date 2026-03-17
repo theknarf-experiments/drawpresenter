@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
 import styles from '../app.module.css';
@@ -20,7 +20,7 @@ const Preview = ({ children }) => {
 			transformOrigin: 'top left',
 			width: 1280, height: 720,
 		}}>
-			<Slide style={{ width: 1280, height: 720, fontSize: '14px' }}>{children}</Slide>
+			<Slide style={{ width: 1280, height: 720 }}>{children}</Slide>
 		</div>
 	</div>;
 }
@@ -99,6 +99,32 @@ const SlideEditor = ({ source, slideIndex }: { source: string; slideIndex: numbe
 	/>;
 }
 
+const ScaledSlide = ({ children }: { children: string }) => {
+	const containerRef = useRef<HTMLDivElement>(null);
+	const [scale, setScale] = useState(1);
+
+	useEffect(() => {
+		if (!containerRef.current) return;
+		const observer = new ResizeObserver((entries) => {
+			const { width, height } = entries[0].contentRect;
+			setScale(Math.min(width / 1280, height / 720));
+		});
+		observer.observe(containerRef.current);
+		return () => observer.disconnect();
+	}, []);
+
+	return <div ref={containerRef} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+		<div style={{
+			width: 1280, height: 720,
+			transform: `scale(${scale})`,
+			transformOrigin: 'center center',
+			flexShrink: 0,
+		}}>
+			<Slide style={{ width: 1280, height: 720 }}>{children}</Slide>
+		</div>
+	</div>;
+}
+
 const AddSlideButton = ({ afterIndex }: { afterIndex: number }) => {
 	const addSlide = async () => {
 		await fetch('/doc/add-slide', {
@@ -169,8 +195,8 @@ const HomePage = () => {
 			}
 			</div>
 			<div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-				<div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', background: '#f0f0f0' }}>
-					<Slide style={{ width: '60vw', height: '60vh' }}>{doc.sections[currentSlide]?.source}</Slide>
+				<div style={{ flex: 1, display: 'flex', background: '#f0f0f0', padding: '10px', minHeight: 0 }}>
+					<ScaledSlide>{doc.sections[currentSlide]?.source}</ScaledSlide>
 				</div>
 				<SlideEditor source={doc.sections[currentSlide]?.source || ''} slideIndex={currentSlide} />
 			</div>
