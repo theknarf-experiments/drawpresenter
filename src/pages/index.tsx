@@ -247,14 +247,14 @@ const HomePage = () => {
 									<Preview>{section.source}</Preview>
 								</div>
 							</ContextMenu>
-							<div style={{ display: 'flex' }}>
-								<span style={{ visibility: 'hidden' }}>{i}</span>
-								<AddSlideButton onClick={() => patchDoc([{ op: 'add', path: `/sections/${i + 1}`, value: { source: '\n# New slide\n\n' } }])} />
-							</div>
 						</div>
 					</ViewTransition>
 				))
 			}
+			<div style={{ display: 'flex' }}>
+				<span style={{ visibility: 'hidden' }}>0</span>
+				<AddSlideButton onClick={() => patchDoc([{ op: 'add', path: `/sections/-`, value: { source: '\n# New slide\n\n' } }])} />
+			</div>
 			</div>
 			<div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 				<div style={{ flex: 1, display: 'flex', background: '#f0f0f0', padding: '10px', minHeight: 0 }}>
