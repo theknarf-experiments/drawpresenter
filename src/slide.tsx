@@ -1,6 +1,6 @@
 import React, { useEffect, useState, createContext, useContext, memo } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { a11yDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 import mermaid from 'mermaid';
 import confetti from 'canvas-confetti';
