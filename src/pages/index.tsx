@@ -98,13 +98,14 @@ const EditableH1 = ({ children, source, slideIndex }: { children: React.ReactNod
 		if (newText === text) return;
 
 		const tree = parseMarkdown(source);
-		// Find the first h1 heading in the AST
 		const heading = tree.children.find(
 			(node: any) => node.type === 'heading' && node.depth === 1
 		);
 		if (heading && heading.children?.[0]?.type === 'text') {
-			heading.children[0].value = newText;
-			const newSource = serializeMarkdown(tree);
+			const textNode = heading.children[0];
+			const start = textNode.position.start.offset;
+			const end = textNode.position.end.offset;
+			const newSource = source.slice(0, start) + newText + source.slice(end);
 			patchDoc([{ op: 'replace', path: `/sections/${slideIndex}/source`, value: newSource }]);
 		}
 	};
