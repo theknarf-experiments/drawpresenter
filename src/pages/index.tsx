@@ -412,6 +412,7 @@ const HomePage = () => {
 			{ op: 'move', from: `/sections/${dragIndex}`, path: `/sections/${toIndex}` },
 		]);
 		goto(toIndex);
+		setSelection({ type: 'slide', index: toIndex });
 		setDragIndex(null);
 		setDropTarget(null);
 	};
