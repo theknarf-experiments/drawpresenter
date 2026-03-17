@@ -90,39 +90,89 @@ const SlideEditor = ({ source, slideIndex }: { source: string; slideIndex: numbe
 	/>;
 }
 
-const EditableH1 = ({ children, source, slideIndex }: { children: React.ReactNode; source: string; slideIndex: number }) => {
+interface EditableProps {
+	tag: keyof JSX.IntrinsicElements;
+	nodeType: string;
+	nodeMatcher?: (node: any) => boolean;
+	children: React.ReactNode;
+	source: string;
+	slideIndex: number;
+}
+
+// Recursively extract all text values from an AST node
+const getNodeText = (node: any): string => {
+	if (node.type === 'text') return node.value;
+	if (node.children) return node.children.map(getNodeText).join('');
+	return '';
+};
+
+// Walk AST depth-first, returning { node, parent, index } for the first match
+const walkTree = (tree: any, matcher: (node: any) => boolean): { node: any; parent: any; index: number } | null => {
+	const walk = (node: any, parent: any, index: number): { node: any; parent: any; index: number } | null => {
+		if (matcher(node)) return { node, parent, index };
+		if (node.children) {
+			for (let i = 0; i < node.children.length; i++) {
+				const result = walk(node.children[i], node, i);
+				if (result) return result;
+			}
+		}
+		return null;
+	};
+	return walk(tree, null, 0);
+};
+
+// Find the deepest text node inside a node
+const findDeepText = (node: any): any | null => {
+	if (node.type === 'text') return node;
+	if (node.children) {
+		for (const child of node.children) {
+			const found = findDeepText(child);
+			if (found) return found;
+		}
+	}
+	return null;
+};
+
+const EditableElement = ({ tag: Tag, nodeType, nodeMatcher, children, source, slideIndex }: EditableProps) => {
 	const text = typeof children === 'string' ? children : Array.isArray(children) ? children.join('') : String(children);
-	const ref = useRef<HTMLHeadingElement>(null);
+	const ref = useRef<HTMLElement>(null);
 	const [mode, setMode] = useState<'idle' | 'selected' | 'editing'>('idle');
+
+	const matcher = nodeMatcher || ((node: any) => node.type === nodeType);
+	// For elements that can appear multiple times (like li), match by text content
+	const textMatcher = (node: any) => matcher(node) && getNodeText(node) === text;
+
+	const findMatch = () => {
+		const tree = parseMarkdown(source);
+		// Try text-aware match first, fall back to type-only match
+		const result = walkTree(tree, textMatcher) || walkTree(tree, matcher);
+		if (!result) return null;
+		const textNode = findDeepText(result.node);
+		return { tree, ...result, textNode };
+	};
 
 	const save = () => {
 		const newText = ref.current?.textContent || '';
 		if (newText === text) return;
 
-		const tree = parseMarkdown(source);
-		const heading = tree.children.find(
-			(node: any) => node.type === 'heading' && node.depth === 1
-		);
-		if (heading && heading.children?.[0]?.type === 'text') {
-			const textNode = heading.children[0];
-			const start = textNode.position.start.offset;
-			const end = textNode.position.end.offset;
+		const found = findMatch();
+		if (found?.textNode) {
+			const start = found.textNode.position.start.offset;
+			const end = found.textNode.position.end.offset;
 			const newSource = source.slice(0, start) + newText + source.slice(end);
 			patchDoc([{ op: 'replace', path: `/sections/${slideIndex}/source`, value: newSource }]);
 		}
 	};
 
-	const deleteHeading = () => {
-		const tree = parseMarkdown(source);
-		const headingIndex = tree.children.findIndex(
-			(node: any) => node.type === 'heading' && node.depth === 1
-		);
-		if (headingIndex === -1) return;
-		const heading = tree.children[headingIndex];
-		const start = heading.position.start.offset;
-		// Include trailing newline(s) after the heading
-		const nextNode = tree.children[headingIndex + 1];
-		const end = nextNode ? nextNode.position.start.offset : heading.position.end.offset;
+	const deleteElement = () => {
+		const found = findMatch();
+		if (!found) return;
+		const { node, parent, index } = found;
+		const start = node.position.start.offset;
+		// Include trailing whitespace up to the next sibling or parent end
+		const siblings = parent?.children;
+		const nextSibling = siblings?.[index + 1];
+		const end = nextSibling ? nextSibling.position.start.offset : node.position.end.offset;
 		const newSource = source.slice(0, start) + source.slice(end);
 		patchDoc([{ op: 'replace', path: `/sections/${slideIndex}/source`, value: newSource }]);
 	};
@@ -160,7 +210,7 @@ const EditableH1 = ({ children, source, slideIndex }: { children: React.ReactNod
 		if (mode === 'selected' && e.key === 'Backspace') {
 			e.preventDefault();
 			e.stopPropagation();
-			deleteHeading();
+			deleteElement();
 			setMode('idle');
 		} else if (mode === 'selected' && e.key === 'Escape') {
 			setMode('idle');
@@ -175,7 +225,6 @@ const EditableH1 = ({ children, source, slideIndex }: { children: React.ReactNod
 		}
 	};
 
-	// Focus the element when selected so it receives keyboard events
 	useEffect(() => {
 		if (mode === 'selected') {
 			ref.current?.focus();
@@ -183,11 +232,11 @@ const EditableH1 = ({ children, source, slideIndex }: { children: React.ReactNod
 		}
 	}, [mode]);
 
-	const className = mode === 'editing' ? styles.editableH1Editing
-		: mode === 'selected' ? styles.editableH1Selected
-		: styles.editableH1;
+	const className = mode === 'editing' ? styles.editableEditing
+		: mode === 'selected' ? styles.editableSelected
+		: styles.editable;
 
-	return <h1
+	return <Tag
 		ref={ref}
 		tabIndex={0}
 		contentEditable={mode === 'editing'}
@@ -197,16 +246,34 @@ const EditableH1 = ({ children, source, slideIndex }: { children: React.ReactNod
 		onBlur={handleBlur}
 		onKeyDown={handleKeyDown}
 		className={className}
-	>{text}</h1>;
+	>{text}</Tag>;
+};
+
+const makeEditable = (tag: keyof JSX.IntrinsicElements, nodeType: string, nodeMatcher?: (node: any) => boolean) => {
+	return (props: any & { source: string; slideIndex: number }) => (
+		<EditableElement tag={tag} nodeType={nodeType} nodeMatcher={nodeMatcher} {...props} />
+	);
 };
 
 const ScaledSlide = ({ children, slideIndex }: { children: string; slideIndex: number }) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [scale, setScale] = useState(1);
 
-	const editableComponents = {
-		h1: (props: any) => <EditableH1 {...props} source={children} slideIndex={slideIndex} />,
-	};
+	const editableComponents = Object.fromEntries(
+		[
+			['h1', makeEditable('h1', 'heading', (n: any) => n.type === 'heading' && n.depth === 1)],
+			['h2', makeEditable('h2', 'heading', (n: any) => n.type === 'heading' && n.depth === 2)],
+			['h3', makeEditable('h3', 'heading', (n: any) => n.type === 'heading' && n.depth === 3)],
+			['h4', makeEditable('h4', 'heading', (n: any) => n.type === 'heading' && n.depth === 4)],
+			['h5', makeEditable('h5', 'heading', (n: any) => n.type === 'heading' && n.depth === 5)],
+			['h6', makeEditable('h6', 'heading', (n: any) => n.type === 'heading' && n.depth === 6)],
+			['p', makeEditable('p', 'paragraph')],
+			['li', makeEditable('li', 'listItem')],
+		].map(([tag, Component]) => [
+			tag,
+			(props: any) => <Component {...props} source={children} slideIndex={slideIndex} />,
+		])
+	);
 
 	useEffect(() => {
 		if (!containerRef.current) return;

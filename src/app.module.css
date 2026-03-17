@@ -226,21 +226,21 @@
   margin-left: 16px;
 }
 
-.editableH1 {
+.editable {
   cursor: pointer;
   outline: 2px dotted transparent;
 }
 
-.editableH1:hover {
+.editable:hover {
   outline-color: rgba(255, 255, 255, 0.5);
 }
 
-.editableH1Selected {
+.editableSelected {
   cursor: pointer;
   outline: 2px solid rgba(255, 255, 255, 0.6);
 }
 
-.editableH1Editing {
+.editableEditing {
   cursor: text;
   outline: 2px solid rgba(255, 255, 255, 0.8);
 }
