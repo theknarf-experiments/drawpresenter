@@ -92,9 +92,11 @@ const SlideEditor = ({ source, slideIndex }: { source: string; slideIndex: numbe
 
 const EditableH1 = ({ children, source, slideIndex }: { children: React.ReactNode; source: string; slideIndex: number }) => {
 	const text = typeof children === 'string' ? children : Array.isArray(children) ? children.join('') : String(children);
+	const ref = useRef<HTMLHeadingElement>(null);
+	const [mode, setMode] = useState<'idle' | 'selected' | 'editing'>('idle');
 
-	const handleBlur = (e: React.FocusEvent<HTMLHeadingElement>) => {
-		const newText = e.currentTarget.textContent || '';
+	const save = () => {
+		const newText = ref.current?.textContent || '';
 		if (newText === text) return;
 
 		const tree = parseMarkdown(source);
@@ -110,11 +112,91 @@ const EditableH1 = ({ children, source, slideIndex }: { children: React.ReactNod
 		}
 	};
 
+	const deleteHeading = () => {
+		const tree = parseMarkdown(source);
+		const headingIndex = tree.children.findIndex(
+			(node: any) => node.type === 'heading' && node.depth === 1
+		);
+		if (headingIndex === -1) return;
+		const heading = tree.children[headingIndex];
+		const start = heading.position.start.offset;
+		// Include trailing newline(s) after the heading
+		const nextNode = tree.children[headingIndex + 1];
+		const end = nextNode ? nextNode.position.start.offset : heading.position.end.offset;
+		const newSource = source.slice(0, start) + source.slice(end);
+		patchDoc([{ op: 'replace', path: `/sections/${slideIndex}/source`, value: newSource }]);
+	};
+
+	const handleClick = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		if (mode === 'idle') {
+			setMode('selected');
+		}
+	};
+
+	const handleDoubleClick = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		setMode('editing');
+		requestAnimationFrame(() => {
+			ref.current?.focus();
+			const selection = window.getSelection();
+			if (selection && ref.current) {
+				const range = document.createRange();
+				range.selectNodeContents(ref.current);
+				selection.removeAllRanges();
+				selection.addRange(range);
+			}
+		});
+	};
+
+	const handleBlur = () => {
+		if (mode === 'editing') {
+			save();
+		}
+		setMode('idle');
+	};
+
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (mode === 'selected' && e.key === 'Backspace') {
+			e.preventDefault();
+			e.stopPropagation();
+			deleteHeading();
+			setMode('idle');
+		} else if (mode === 'selected' && e.key === 'Escape') {
+			setMode('idle');
+			ref.current?.blur();
+		} else if (mode === 'editing' && e.key === 'Escape') {
+			e.preventDefault();
+			setMode('selected');
+			window.getSelection()?.removeAllRanges();
+		} else if (mode === 'selected' && e.key === 'Enter') {
+			e.preventDefault();
+			handleDoubleClick(e as any);
+		}
+	};
+
+	// Focus the element when selected so it receives keyboard events
+	useEffect(() => {
+		if (mode === 'selected') {
+			ref.current?.focus();
+			window.getSelection()?.removeAllRanges();
+		}
+	}, [mode]);
+
+	const className = mode === 'editing' ? styles.editableH1Editing
+		: mode === 'selected' ? styles.editableH1Selected
+		: styles.editableH1;
+
 	return <h1
-		contentEditable
+		ref={ref}
+		tabIndex={0}
+		contentEditable={mode === 'editing'}
 		suppressContentEditableWarning
+		onClick={handleClick}
+		onDoubleClick={handleDoubleClick}
 		onBlur={handleBlur}
-		className={styles.editableH1}
+		onKeyDown={handleKeyDown}
+		className={className}
 	>{text}</h1>;
 };
 
@@ -149,6 +231,7 @@ const AddSlideButton = ({ onClick }: { onClick: () => void }) => {
 
 const HomePage = () => {
 	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides();
+	const [slideSelected, setSlideSelected] = useState(false);
 	const [dragIndex, setDragIndex] = useState<number | null>(null);
 	const [dropTarget, setDropTarget] = useState<number | null>(null);
 
@@ -190,11 +273,13 @@ const HomePage = () => {
 	};
 
 	useKeybindings({
-		'ArrowDown': next,
-		'ArrowRight': next,
-		'ArrowUp': prev,
-		'ArrowLeft': prev,
-		'Backspace': () => deleteSlide(currentSlide),
+		'ArrowDown': () => { next(); setSlideSelected(false); },
+		'ArrowRight': () => { next(); setSlideSelected(false); },
+		'ArrowUp': () => { prev(); setSlideSelected(false); },
+		'ArrowLeft': () => { prev(); setSlideSelected(false); },
+		'Enter': () => { if (!slideSelected) setSlideSelected(true); },
+		'Escape': () => { if (slideSelected) setSlideSelected(false); },
+		'Backspace': () => { if (slideSelected) { deleteSlide(currentSlide); setSlideSelected(false); } },
 	});
 
 	const startPresentation = () => {
@@ -238,7 +323,7 @@ const HomePage = () => {
 										dropTarget === i && dragIndex !== null && dragIndex > i ? styles.slideRowDropAbove : '',
 										dropTarget === i && dragIndex !== null && dragIndex < i ? styles.slideRowDropBelow : '',
 									].join(' ')}
-									onClick={() => goto(i)}
+									onClick={() => { goto(i); setSlideSelected(i === currentSlide ? !slideSelected : false); }}
 									draggable
 									onDragStart={(e) => handleDragStart(e, i)}
 									onDragOver={(e) => handleDragOver(e, i)}
@@ -246,7 +331,7 @@ const HomePage = () => {
 									onDrop={(e) => handleDrop(e, i)}
 									onDragEnd={handleDragEnd}>
 									<span className={styles.slideNumber}>{i}</span>
-									<div className={i === currentSlide ? styles.slideThumbActive : styles.slideThumb}>
+									<div className={i === currentSlide && slideSelected ? styles.slideThumbSelected : i === currentSlide ? styles.slideThumbActive : styles.slideThumb}>
 										<Preview>{section.source}</Preview>
 									</div>
 								</div>

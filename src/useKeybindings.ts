@@ -6,8 +6,12 @@ const useKeybindings = (keybindings) => {
 
 	useEffect(() => {
 		const eventListener = (e) => {
-			const tag = (e.target as HTMLElement)?.tagName;
-			if (tag === 'TEXTAREA' || tag === 'INPUT' || (e.target as HTMLElement)?.isContentEditable)
+			const target = e.target as HTMLElement;
+			const tag = target?.tagName;
+			if (tag === 'TEXTAREA' || tag === 'INPUT' || target?.isContentEditable)
+				return;
+			// Skip elements that explicitly handle their own keyboard events
+			if (target?.tabIndex >= 0 && tag !== 'BODY' && tag !== 'DIV')
 				return;
 
 			if(typeof ref.current[e.key] == 'function')

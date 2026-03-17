@@ -47,6 +47,15 @@
   outline-color: #0066ff;
 }
 
+.slideThumbSelected {
+  composes: slideThumb;
+  outline: 3px solid #0066ff;
+}
+
+.slideThumbSelected:hover {
+  outline-color: #0066ff;
+}
+
 .slideList {
   overflow-y: scroll;
   padding: 10px;
@@ -218,7 +227,7 @@
 }
 
 .editableH1 {
-  cursor: text;
+  cursor: pointer;
   outline: 2px dotted transparent;
 }
 
@@ -226,8 +235,14 @@
   outline-color: rgba(255, 255, 255, 0.5);
 }
 
-.editableH1:focus {
-  outline-color: rgba(255, 255, 255, 0.8);
+.editableH1Selected {
+  cursor: pointer;
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+.editableH1Editing {
+  cursor: text;
+  outline: 2px solid rgba(255, 255, 255, 0.8);
 }
 
 .print {
