@@ -22,7 +22,7 @@ const FittedSlide = ({ children, overlay, ...slideProps }: FittedSlideProps) => 
 	}, []);
 
 	return <div ref={containerRef} className={styles.scaledSlideContainer}>
-		<div className={styles.scaledSlideInner} style={{ transform: `scale(${scale})`, transformOrigin: 'center center', position: 'relative' }}>
+		<div className={styles.scaledSlideInner} style={{ transform: `scale(${scale})`, transformOrigin: 'top center', position: 'relative' }}>
 			<Slide style={{ width: 1280, height: 720 }} {...slideProps}>{children}</Slide>
 			{overlay}
 		</div>
