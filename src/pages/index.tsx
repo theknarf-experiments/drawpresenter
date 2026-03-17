@@ -152,7 +152,7 @@ const HomePage = () => {
 			<ThemeSettings frontmatter={doc.frontmatter} />
 		</div>
 		<div style={{ display: 'flex', flexDirection: 'row', flex: 1, minHeight: 0 }}>
-			<div style={{ margin: '10px', overflow: 'auto' }}>
+			<div style={{ overflow: 'auto', padding: '10px' }}>
 			{
 				doc.sections.map((section, i) => (
 					<div key={`section-${i}`}>
@@ -168,7 +168,7 @@ const HomePage = () => {
 				))
 			}
 			</div>
-			<div style={{ flex: 1, display: 'flex', flexDirection: 'column', margin: '10px', minWidth: 0 }}>
+			<div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 				<div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', background: '#f0f0f0' }}>
 					<Slide style={{ width: '60vw', height: '60vh' }}>{doc.sections[currentSlide]?.source}</Slide>
 				</div>
