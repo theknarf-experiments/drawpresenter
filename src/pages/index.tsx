@@ -133,8 +133,18 @@ const findDeepText = (node: any): any | null => {
 	return null;
 };
 
+// Recursively extract text from React children (handles nested elements like <p> inside <li>)
+const extractText = (children: React.ReactNode): string => {
+	if (typeof children === 'string') return children;
+	if (typeof children === 'number') return String(children);
+	if (children == null || typeof children === 'boolean') return '';
+	if (Array.isArray(children)) return children.map(extractText).join('');
+	if (typeof children === 'object' && 'props' in children) return extractText(children.props.children);
+	return '';
+};
+
 const EditableElement = ({ tag: Tag, nodeType, nodeMatcher, children, source, slideIndex }: EditableProps) => {
-	const text = typeof children === 'string' ? children : Array.isArray(children) ? children.join('') : String(children);
+	const text = extractText(children);
 	const ref = useRef<HTMLElement>(null);
 	const [mode, setMode] = useState<'idle' | 'selected' | 'editing'>('idle');
 
@@ -246,7 +256,7 @@ const EditableElement = ({ tag: Tag, nodeType, nodeMatcher, children, source, sl
 		onBlur={handleBlur}
 		onKeyDown={handleKeyDown}
 		className={className}
-	>{text}</Tag>;
+	>{mode === 'editing' ? text : children}</Tag>;
 };
 
 const makeEditable = (tag: keyof JSX.IntrinsicElements, nodeType: string, nodeMatcher?: (node: any) => boolean) => {
