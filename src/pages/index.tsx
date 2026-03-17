@@ -664,14 +664,14 @@ const HomePage = () => {
 
 	return <div className={styles.overview} onClick={() => setSelection(null)}>
 		<CMDK>
-			<Command.Item onSelect={startPresentation}>Start presentation</Command.Item>
-			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>
+			<Command.Item onSelect={startPresentation}>Start</Command.Item>
+			<Command.Item onSelect={openForPrint}>Print</Command.Item>
 		</CMDK>
 		<div className={styles.toolbar}>
 			<div className={styles.toolbarLinks}>
-				<LinkButton href="/present">Start presentation</LinkButton>
-				<LinkButton href="/presenter">Presenter mode</LinkButton>
-				<LinkButton href="/print">Open for print</LinkButton>
+				<LinkButton href="/present">Start</LinkButton>
+				<LinkButton href="/presenter">Presenter</LinkButton>
+				<LinkButton href="/print">Print</LinkButton>
 				<Button onClick={() => fetch('/doc/undo', { method: 'POST' })}>Undo</Button>
 				<Button onClick={() => fetch('/doc/redo', { method: 'POST' })}>Redo</Button>
 				<Button onClick={() => { setDrawMode(d => !d); if (drawMode) setSelection(null); }}>{drawMode ? 'Stop drawing' : 'Draw'}</Button>
@@ -769,12 +769,6 @@ const HomePage = () => {
 				<SlideEditor source={doc.sections[currentSlide]?.source || ''} slideIndex={currentSlide} />
 			</div>
 			{showHistory && <HistoryPanel history={(doc as any).history} />}
-		</div>
-		<div className={styles.bottomBar}>
-			<Button onClick={prev}>Prev</Button>
-			<span>{currentSlide}</span>
-			<Button onClick={next}>Next</Button>
-			<span className={styles.bottomBarHint}>Hit cmd+k for more actions</span>
 		</div>
 	</div>;
 }
