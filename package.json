@@ -14,7 +14,6 @@
     "cmdk": "^0.2.1",
     "commander": "^9.5.0",
     "express": "^4.21.2",
-    "html2canvas": "^1.4.1",
     "js-yaml": "^4.1.0",
     "mdx-embed": "^1.1.2",
     "mermaid": "^10.9.4",

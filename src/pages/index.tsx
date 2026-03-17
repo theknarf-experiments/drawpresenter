@@ -1,5 +1,4 @@
-import { useState, useReducer, useMemo, useRef, useEffect } from 'react';
-import html2canvas from 'html2canvas';
+import { useRef, useEffect } from 'react';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
 import styles from '../app.module.css';
@@ -8,41 +7,19 @@ import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
 
 const Preview = ({ children }) => {
-	const ref = useRef(null);
-	const refTarget = useRef(null);
-
-	useEffect(() => {
-		if(
-			ref !== null &&
-			ref?.current !== null &&
-			refTarget !== null &&
-			refTarget?.current !== null
-		) {
-			html2canvas(ref.current, {
-				width: 1280 / 5,
-				height: 720 / 5,
-			}).then((canvas) => {
-				if(refTarget.current?.hasChildNodes()) {
-					refTarget.current?.removeChild(
-						refTarget.current.children[0]
-					);
-				}
-
-				refTarget.current?.appendChild(canvas);
-			});
-		}
-	}, [ref, refTarget])
-
-	return <div>
-		<div style={{ opacity: 0, position: 'fixed', pointerEvents: 'none' }}>
-			<div ref={ref}>
-				<Slide style={{ width: '15vw', height: '15vh', fontSize: '14px' }}>{children}</Slide>
-			</div>
+	return <div style={{
+		width: 256, height: 144,
+		overflow: 'hidden',
+		border: '1px solid black',
+		margin: 5,
+	}}>
+		<div style={{
+			transform: 'scale(0.2)',
+			transformOrigin: 'top left',
+			width: 1280, height: 720,
+		}}>
+			<Slide style={{ width: 1280, height: 720, fontSize: '14px' }}>{children}</Slide>
 		</div>
-		<div
-			style={{ border: '1px solid black', padding: '5px', margin: '5px' }}
-			ref={refTarget}
-		></div>
 	</div>;
 }
 
