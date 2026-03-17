@@ -171,6 +171,7 @@ const HomePage = () => {
 		patchDoc([
 			{ op: 'move', from: `/sections/${dragIndex}`, path: `/sections/${toIndex}` },
 		]);
+		goto(toIndex);
 		setDragIndex(null);
 		setDropTarget(null);
 	};
