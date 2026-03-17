@@ -292,6 +292,38 @@ const ScaledSlide = ({ children, slideIndex, fonts }: { children: string; slideI
 	</div>;
 }
 
+const HistoryPanel = ({ history }: { history: any }) => {
+	if (!history) return <div className={styles.historyPanel} style={{ padding: '10px' }}>No history</div>;
+
+	const opSummary = (ops: any[]) => {
+		return ops.map(op => `${op.op} ${op.path}`).join(', ');
+	};
+
+	return <div className={styles.historyPanel}>
+		<div style={{ padding: '8px', fontWeight: 'bold', borderBottom: '1px solid #ccc' }}>
+			Edit History (pointer: {history.pointer})
+		</div>
+		<div style={{ padding: '4px', borderBottom: '1px solid #ccc', fontStyle: 'italic', opacity: history.pointer === -1 ? 1 : 0.4 }}>
+			Base document {history.pointer === -1 && ' ←'}
+		</div>
+		{history.patches.map((patch: any) => (
+			<div key={patch.index} style={{
+				padding: '6px 8px',
+				fontSize: '12px',
+				fontFamily: 'monospace',
+				borderBottom: '1px solid #eee',
+				opacity: patch.active ? 1 : 0.4,
+				background: patch.index === history.pointer ? '#e6f0ff' : 'transparent',
+			}}>
+				<span>{patch.index}: </span>
+				<span>{opSummary(patch.operations)}</span>
+				{patch.index === history.pointer && <span> ←</span>}
+			</div>
+		))}
+		{history.totalPatches === 0 && <div style={{ padding: '8px', opacity: 0.5 }}>No edits yet</div>}
+	</div>;
+};
+
 const AddSlideButton = ({ onClick }: { onClick: () => void }) => {
 	return <button onClick={onClick} className={styles.addSlideButton}>+ Add slide</button>;
 }
@@ -299,6 +331,7 @@ const AddSlideButton = ({ onClick }: { onClick: () => void }) => {
 const HomePage = () => {
 	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides();
 	const [slideSelected, setSlideSelected] = useState(false);
+	const [showHistory, setShowHistory] = useState(false);
 	const [dragIndex, setDragIndex] = useState<number | null>(null);
 	const [dropTarget, setDropTarget] = useState<number | null>(null);
 
@@ -339,6 +372,22 @@ const HomePage = () => {
 		if (index > 0) prev();
 	};
 
+	// Undo/redo with Cmd+Z / Cmd+Shift+Z
+	useEffect(() => {
+		const handler = (e: KeyboardEvent) => {
+			if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+				e.preventDefault();
+				if (e.shiftKey) {
+					fetch('/doc/redo', { method: 'POST' });
+				} else {
+					fetch('/doc/undo', { method: 'POST' });
+				}
+			}
+		};
+		document.addEventListener('keydown', handler);
+		return () => document.removeEventListener('keydown', handler);
+	}, []);
+
 	useKeybindings({
 		'ArrowDown': () => { next(); setSlideSelected(false); },
 		'ArrowRight': () => { next(); setSlideSelected(false); },
@@ -369,6 +418,9 @@ const HomePage = () => {
 			<div className={styles.toolbarLinks}>
 				<LinkButton href="/present">Start presentation</LinkButton>
 				<LinkButton href="/print">Open for print</LinkButton>
+				<Button onClick={() => fetch('/doc/undo', { method: 'POST' })}>Undo</Button>
+				<Button onClick={() => fetch('/doc/redo', { method: 'POST' })}>Redo</Button>
+				<Button onClick={() => setShowHistory(h => !h)}>History</Button>
 			</div>
 			<ThemeSettings frontmatter={doc.frontmatter} />
 		</div>
@@ -418,6 +470,7 @@ const HomePage = () => {
 				</div>
 				<SlideEditor source={doc.sections[currentSlide]?.source || ''} slideIndex={currentSlide} />
 			</div>
+			{showHistory && <HistoryPanel history={(doc as any).history} />}
 		</div>
 		<div className={styles.bottomBar}>
 			<Button onClick={prev}>Prev</Button>

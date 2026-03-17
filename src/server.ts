@@ -1,7 +1,16 @@
 import path from 'path';
 import { watch } from 'fs';
+import { readFile, writeFile } from 'fs/promises';
+import { createHash } from 'crypto';
 import express, { Request, Response, NextFunction } from 'express';
-import { openDocument, addSlideAfter, updateFrontmatter, patchDocument, Document, Section } from './document';
+import { openDocument, addSlideAfter, updateFrontmatter, patchDocument, applyPatchToDoc, serialize, Document, Section } from './document';
+import { Operation } from 'fast-json-patch';
+
+interface EditHistory {
+	baseDoc: Document;
+	patches: Operation[][];
+	pointer: number; // index of the last applied patch (-1 = at base)
+}
 
 const start = async (projectFile: string, dev: boolean = false, hostname: string = 'localhost', port: number = 3000): Promise<void> => {
 	const server = express();
@@ -12,38 +21,80 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 
 	server.use(express.json());
 
-	// Keep cached doc for stable IDs across re-parses
-	let cachedDoc: Document | null = null;
+	let history: EditHistory | null = null;
 
-	const getDoc = async (): Promise<Document> => {
+	const getCurrentDoc = (): Document => {
+		if (!history) throw new Error('No document loaded');
+		let doc = history.baseDoc;
+		for (let i = 0; i <= history.pointer; i++) {
+			doc = applyPatchToDoc(doc, history.patches[i]);
+		}
+		return doc;
+	};
+
+	const initHistory = async (): Promise<Document> => {
 		const doc = await openDocument(projectFile);
-		if (cachedDoc) {
+		if (history) {
 			// Preserve IDs for sections whose content matches
 			const usedIds = new Set<string>();
 			doc.sections = doc.sections.map(s => {
-				const match = cachedDoc!.sections.find(
+				const currentDoc = getCurrentDoc();
+				const match = currentDoc.sections.find(
 					p => p.source === s.source && !usedIds.has(p.id)
 				);
 				if (match) {
 					usedIds.add(match.id);
 					return { ...s, id: match.id };
 				}
-				return s; // keeps the new UUID from parse
+				return s;
 			});
 		}
-		cachedDoc = doc;
+		history = { baseDoc: doc, patches: [], pointer: -1 };
 		return doc;
 	};
 
-	const updateCache = (doc: Document) => {
-		cachedDoc = doc;
+	const applyAndRecord = async (operations: Operation[]): Promise<Document> => {
+		if (!history) await initHistory();
+
+		// Truncate any redo history
+		history!.patches = history!.patches.slice(0, history!.pointer + 1);
+		history!.patches.push(operations);
+		history!.pointer++;
+
+		const doc = getCurrentDoc();
+		await saveDoc(doc);
+		return doc;
+	};
+
+	let lastWrittenHash = '';
+
+	const hashContent = (content: string) =>
+		createHash('md5').update(content).digest('hex');
+
+	const saveDoc = async (doc: Document) => {
+		const content = serialize(doc);
+		lastWrittenHash = hashContent(content);
+		await writeFile(path.resolve(projectFile), content, 'utf-8');
 	};
 
 	// SSE: track connected clients
 	const sseClients = new Set<Response>();
 
+	const getDocWithHistory = (doc: Document) => ({
+		...doc,
+		history: history ? {
+			pointer: history.pointer,
+			totalPatches: history.patches.length,
+			patches: history.patches.map((ops, i) => ({
+				index: i,
+				active: i <= history!.pointer,
+				operations: ops,
+			})),
+		} : { pointer: -1, totalPatches: 0, patches: [] },
+	});
+
 	const notifyClients = (doc: Document) => {
-		const data = JSON.stringify(doc);
+		const data = JSON.stringify(getDocWithHistory(doc));
 		for (const client of sseClients) {
 			client.write(`data: ${data}\n\n`);
 		}
@@ -51,22 +102,50 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 
 	// Watch the project file for external changes
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-	let suppressWatcher = false;
-
-	const notifyAndSuppress = (doc: Document) => {
-		suppressWatcher = true;
-		notifyClients(doc);
-		// Allow watcher again after debounce window
-		setTimeout(() => { suppressWatcher = false; }, 200);
-	};
 
 	watch(path.resolve(projectFile), () => {
 		if (debounceTimer) clearTimeout(debounceTimer);
 		debounceTimer = setTimeout(async () => {
-			if (suppressWatcher) return;
-			console.log('File changed externally, notifying clients');
-			const doc = await getDoc();
-			notifyClients(doc);
+			// Check if the file content actually changed from what we last wrote
+			const content = await readFile(path.resolve(projectFile), 'utf-8');
+			if (hashContent(content) === lastWrittenHash) return;
+
+			console.log('File changed externally, recording in history');
+
+			const newDoc = await openDocument(projectFile);
+
+			if (!history) {
+				history = { baseDoc: newDoc, patches: [], pointer: -1 };
+				notifyClients(newDoc);
+				return;
+			}
+
+			// Preserve IDs for sections whose content matches
+			const currentDoc = getCurrentDoc();
+			const usedIds = new Set<string>();
+			newDoc.sections = newDoc.sections.map(s => {
+				const match = currentDoc.sections.find(
+					p => p.source === s.source && !usedIds.has(p.id)
+				);
+				if (match) {
+					usedIds.add(match.id);
+					return { ...s, id: match.id };
+				}
+				return s;
+			});
+
+			// Record as a replace operation in history
+			const operations: Operation[] = [
+				{ op: 'replace', path: '/frontmatter', value: newDoc.frontmatter },
+				{ op: 'replace', path: '/sections', value: newDoc.sections },
+			];
+
+			// Truncate redo history
+			history.patches = history.patches.slice(0, history.pointer + 1);
+			history.patches.push(operations);
+			history.pointer++;
+
+			notifyClients(getCurrentDoc());
 		}, 100);
 	});
 
@@ -85,38 +164,66 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 	});
 
 	server.get('/doc', async (req: Request, res: Response) => {
-		const doc = await getDoc();
-		res.json({ doc });
+		const doc = history ? getCurrentDoc() : await initHistory();
+		res.json({ doc: getDocWithHistory(doc) });
 	});
 
 	server.post('/doc/add-slide', async (req: Request, res: Response) => {
 		const { afterIndex } = req.body;
-		const existing = cachedDoc || await getDoc();
-		const doc = await addSlideAfter(projectFile, afterIndex, existing);
-		updateCache(doc);
+		const operations: Operation[] = [
+			{ op: 'add', path: `/sections/${afterIndex + 1}`, value: { source: '\n# New slide\n\n' } },
+		];
+		const doc = await applyAndRecord(operations);
 
-		res.json({ doc });
-		notifyAndSuppress(doc);
+		res.json({ doc: getDocWithHistory(doc) });
+		notifyClients(doc);
 	});
 
 	server.post('/doc/frontmatter', async (req: Request, res: Response) => {
 		const { frontmatter } = req.body;
-		const existing = cachedDoc || await getDoc();
-		const doc = await updateFrontmatter(projectFile, frontmatter, existing);
-		updateCache(doc);
+		const operations: Operation[] = [
+			{ op: 'replace', path: '/frontmatter', value: frontmatter },
+		];
+		const doc = await applyAndRecord(operations);
 
-		res.json({ doc });
-		notifyAndSuppress(doc);
+		res.json({ doc: getDocWithHistory(doc) });
+		notifyClients(doc);
 	});
 
 	server.patch('/doc', async (req: Request, res: Response) => {
-		const operations = req.body;
-		const existing = cachedDoc || await getDoc();
-		const doc = await patchDocument(projectFile, operations, existing);
-		updateCache(doc);
+		const operations: Operation[] = req.body;
+		const doc = await applyAndRecord(operations);
 
-		res.json({ doc });
-		notifyAndSuppress(doc);
+		res.json({ doc: getDocWithHistory(doc) });
+		notifyClients(doc);
+	});
+
+	server.post('/doc/undo', async (req: Request, res: Response) => {
+		if (!history || history.pointer < 0) {
+			const doc = history ? getCurrentDoc() : await initHistory();
+			res.json({ doc: getDocWithHistory(doc) });
+			return;
+		}
+		history.pointer--;
+		const doc = getCurrentDoc();
+		await saveDoc(doc);
+
+		res.json({ doc: getDocWithHistory(doc) });
+		notifyClients(doc);
+	});
+
+	server.post('/doc/redo', async (req: Request, res: Response) => {
+		if (!history || history.pointer >= history.patches.length - 1) {
+			const doc = history ? getCurrentDoc() : await initHistory();
+			res.json({ doc: getDocWithHistory(doc) });
+			return;
+		}
+		history.pointer++;
+		const doc = getCurrentDoc();
+		await saveDoc(doc);
+
+		res.json({ doc: getDocWithHistory(doc) });
+		notifyClients(doc);
 	});
 
 	if (dev) {

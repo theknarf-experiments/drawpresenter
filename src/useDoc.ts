@@ -29,10 +29,11 @@ const useDoc = (): [Document | undefined, boolean, Error | null] => {
 			const newDoc: Document = JSON.parse(e.data);
 			startTransition(() => {
 				setDoc(prev => {
-					// Skip if IDs haven't changed (avoids unnecessary re-render from duplicate SSE events)
+					// Skip if nothing changed (avoids unnecessary re-render from duplicate SSE events)
 					if (prev && prev.sections.length === newDoc.sections.length &&
 						prev.sections.every((s, i) => s.id === newDoc.sections[i].id && s.source === newDoc.sections[i].source) &&
-						JSON.stringify(prev.frontmatter) === JSON.stringify(newDoc.frontmatter)) {
+						JSON.stringify(prev.frontmatter) === JSON.stringify(newDoc.frontmatter) &&
+						(prev as any).history?.pointer === (newDoc as any).history?.pointer) {
 						return prev;
 					}
 					return newDoc;

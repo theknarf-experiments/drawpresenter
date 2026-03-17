@@ -245,6 +245,14 @@
   outline: 2px solid rgba(255, 255, 255, 0.8);
 }
 
+.historyPanel {
+  width: 300px;
+  border-left: 1px solid #ccc;
+  overflow-y: auto;
+  background: white;
+  font-size: 13px;
+}
+
 .print {
   margin-bottom: 5px;
   width: 1856px; /* 1280*1.45 */

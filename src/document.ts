@@ -99,12 +99,11 @@ const saveDocument = async (doc: Document): Promise<void> => {
 	await writeFile(doc.filePath, serialize(doc), 'utf-8');
 }
 
-export const patchDocument = async (filePath: string, operations: Operation[], existingDoc?: Document): Promise<Document> => {
-	const doc = existingDoc || await openDocument(filePath);
-	const { frontmatter, sections } = doc;
-
-	// Apply patch to the mutable parts (not filePath)
-	const patchable = { frontmatter, sections };
+export const applyPatchToDoc = (doc: Document, operations: Operation[]): Document => {
+	const patchable = {
+		frontmatter: JSON.parse(JSON.stringify(doc.frontmatter)),
+		sections: JSON.parse(JSON.stringify(doc.sections)),
+	};
 	applyPatch(patchable, operations);
 
 	// Ensure all sections have IDs (new sections from add won't)
@@ -113,12 +112,16 @@ export const patchDocument = async (filePath: string, operations: Operation[], e
 		id: s.id || randomUUID(),
 	}));
 
-	const patched: Document = {
+	return {
 		filePath: doc.filePath,
 		frontmatter: patchable.frontmatter,
 		sections: patchable.sections,
 	};
+}
 
+export const patchDocument = async (filePath: string, operations: Operation[], existingDoc?: Document): Promise<Document> => {
+	const doc = existingDoc || await openDocument(filePath);
+	const patched = applyPatchToDoc(doc, operations);
 	await saveDocument(patched);
 	return patched;
 }
