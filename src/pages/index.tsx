@@ -185,7 +185,7 @@ const HomePage = () => {
 			<ThemeSettings frontmatter={doc.frontmatter} />
 		</div>
 		<div style={{ display: 'flex', flexDirection: 'row', flex: 1, minHeight: 0 }}>
-			<div style={{ overflow: 'auto', padding: '10px' }}>
+			<div className={styles.slideList}>
 			{
 				doc.sections.map((section, i) => (
 					<ViewTransition key={section.id} exit="slide-out" enter="slide-in">

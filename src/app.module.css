@@ -50,6 +50,27 @@
   outline-color: #0066ff;
 }
 
+.slideList {
+  overflow-y: scroll;
+  padding: 10px;
+  scrollbar-gutter: stable;
+}
+
+/* Force scrollbar visible on WebKit/Blink browsers */
+.slideList::-webkit-scrollbar {
+  width: 8px;
+  -webkit-appearance: none;
+}
+
+.slideList::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.slideList::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
 .print {
   margin-bottom: 5px;
   width: 1856px; /* 1280*1.45 */
