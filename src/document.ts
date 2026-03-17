@@ -3,6 +3,12 @@ import { randomUUID } from 'crypto';
 import * as yaml from 'js-yaml';
 import { applyPatch, Operation } from 'fast-json-patch';
 
+export interface CornerImage {
+  src: string;
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  size?: number; // pixels, default 80
+}
+
 export interface Frontmatter {
   [key: string]: any;
   fonts?: {
@@ -14,6 +20,7 @@ export interface Frontmatter {
     text?: string;
     link?: string;
   };
+  cornerImage?: CornerImage;
 }
 
 export interface Section {

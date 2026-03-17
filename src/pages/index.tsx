@@ -18,10 +18,10 @@ const patchDoc = (operations: any[]) =>
 		body: JSON.stringify(operations),
 	});
 
-const Preview = ({ children, fonts }: { children: string; fonts?: { heading?: string; body?: string } }) => {
+const Preview = ({ children, fonts, cornerImage }: { children: string; fonts?: { heading?: string; body?: string }; cornerImage?: any }) => {
 	return <div className={styles.previewOuter}>
 		<div className={styles.previewInner}>
-			<Slide style={{ width: 1280, height: 720 }} fonts={fonts}>{children}</Slide>
+			<Slide style={{ width: 1280, height: 720 }} fonts={fonts} cornerImage={cornerImage}>{children}</Slide>
 		</div>
 	</div>;
 }
@@ -295,7 +295,7 @@ const makeEditable = (tag: keyof JSX.IntrinsicElements, nodeType: string, nodeMa
 	);
 };
 
-const ScaledSlide = ({ children, slideIndex, fonts, selection, setSelection }: { children: string; slideIndex: number; fonts?: { heading?: string; body?: string }; selection: Selection; setSelection: (s: Selection) => void }) => {
+const ScaledSlide = ({ children, slideIndex, fonts, cornerImage, selection, setSelection }: { children: string; slideIndex: number; fonts?: { heading?: string; body?: string }; cornerImage?: any; selection: Selection; setSelection: (s: Selection) => void }) => {
 	const counters = useRef<Map<string, number>>(new Map());
 	counters.current.clear();
 
@@ -323,7 +323,7 @@ const ScaledSlide = ({ children, slideIndex, fonts, selection, setSelection }: {
 		])
 	);
 
-	return <FittedSlide fonts={fonts} components={editableComponents}>{children}</FittedSlide>;
+	return <FittedSlide fonts={fonts} cornerImage={cornerImage} components={editableComponents}>{children}</FittedSlide>;
 }
 
 const HistoryPanel = ({ history }: { history: any }) => {
@@ -554,7 +554,7 @@ const HomePage = () => {
 									onDragEnd={handleDragEnd}>
 									<span className={styles.slideNumber}>{i}</span>
 									<div className={selection?.type === 'slide' && selection.index === i ? styles.slideThumbSelected : i === currentSlide ? styles.slideThumbActive : styles.slideThumb}>
-										<Preview fonts={doc.frontmatter.fonts}>{section.source}</Preview>
+										<Preview fonts={doc.frontmatter.fonts} cornerImage={doc.frontmatter.cornerImage}>{section.source}</Preview>
 									</div>
 								</div>
 							</ContextMenu>
@@ -569,7 +569,7 @@ const HomePage = () => {
 			</div>
 			<div className={styles.previewArea}>
 				<div className={styles.previewPane}>
-					<ScaledSlide slideIndex={currentSlide} fonts={doc.frontmatter.fonts} selection={selection} setSelection={setSelection}>{doc.sections[currentSlide]?.source}</ScaledSlide>
+					<ScaledSlide slideIndex={currentSlide} fonts={doc.frontmatter.fonts} cornerImage={doc.frontmatter.cornerImage} selection={selection} setSelection={setSelection}>{doc.sections[currentSlide]?.source}</ScaledSlide>
 				</div>
 				<SlideEditor source={doc.sections[currentSlide]?.source || ''} slideIndex={currentSlide} />
 			</div>

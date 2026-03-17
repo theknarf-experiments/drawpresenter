@@ -12,7 +12,7 @@ const Present = () => {
 		{
 			doc.sections.map((section, i) => (
 				<div className={styles.print} key={`section-${i}`}>
-					<Slide style={{ width: '100%', height: '100%', overflow: 'hidden' }} fonts={doc.frontmatter.fonts}>{section.source}</Slide>
+					<Slide style={{ width: '100%', height: '100%', overflow: 'hidden' }} fonts={doc.frontmatter.fonts} cornerImage={doc.frontmatter.cornerImage}>{section.source}</Slide>
 					<div style={{ pageBreakAfter: 'always' }}></div>
 				</div>
 			))

@@ -73,7 +73,7 @@ const Present = () => {
 			})}>Clear drawings</Command.Item>
 		</CMDK>
 
-		<Slide style={{ width: '100%', height: '100%', overflow: 'hidden' }} fonts={doc.frontmatter.fonts}>{doc.sections[currentSlide]?.source}</Slide>
+		<Slide style={{ width: '100%', height: '100%', overflow: 'hidden' }} fonts={doc.frontmatter.fonts} cornerImage={doc.frontmatter.cornerImage}>{doc.sections[currentSlide]?.source}</Slide>
 		<DrawingOverlay slideIndex={currentSlide} strokes={slideDrawings} enabled={drawMode} />
 		<StatusIndicator doc={doc} currentSlide={currentSlide} />
 	</div>;

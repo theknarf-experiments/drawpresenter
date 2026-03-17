@@ -127,14 +127,14 @@ const Presenter = () => {
 			<div style={{ flex: 2, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
 				<FittedSlide
-					fonts={doc.frontmatter.fonts}
+					fonts={doc.frontmatter.fonts} cornerImage={doc.frontmatter.cornerImage}
 					overlay={<DrawingOverlay slideIndex={currentSlide} strokes={slideDrawings} enabled={drawMode} color={drawColor} size={brushSize} />}
 				>{doc.sections[currentSlide]?.source}</FittedSlide>
 			</div>
 			<div style={{ width: '33%', display: 'flex', flexDirection: 'column', minWidth: 0, flexShrink: 0 }}>
 
 				<div style={{ aspectRatio: '16/9', maxHeight: '30vh' }}>
-					<FittedSlide fonts={doc.frontmatter.fonts}>{doc.sections[currentSlide + 1]?.source}</FittedSlide>
+					<FittedSlide fonts={doc.frontmatter.fonts} cornerImage={doc.frontmatter.cornerImage}>{doc.sections[currentSlide + 1]?.source}</FittedSlide>
 				</div>
 
 				<div style={{

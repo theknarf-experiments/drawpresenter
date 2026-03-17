@@ -8,6 +8,7 @@ import { Tweet } from "mdx-embed/dist/components/twitter";
 import useKeybindings from './useKeybindings';
 import { evaluate } from '@mdx-js/mdx'
 import * as runtime from 'react/jsx-runtime'
+import { CornerImage } from './document';
 
 mermaid.initialize({
   startOnLoad: true,
@@ -109,12 +110,23 @@ export interface SlideProps {
   style?: React.CSSProperties;
   components?: Record<string, any>;
   fonts?: { heading?: string; body?: string };
+  cornerImage?: CornerImage;
 }
 
 const fontLink = (font: string) =>
 	`https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:wght@300;400;500;600;700&display=swap`;
 
-const Slide = ({ children, style, components, fonts }: SlideProps) => {
+const positionStyle = (position: CornerImage['position']): React.CSSProperties => {
+	const base: React.CSSProperties = { position: 'absolute', zIndex: 5 };
+	switch (position) {
+		case 'top-left': return { ...base, top: '3%', left: '3%' };
+		case 'top-right': return { ...base, top: '3%', right: '3%' };
+		case 'bottom-left': return { ...base, bottom: '3%', left: '3%' };
+		case 'bottom-right': return { ...base, bottom: '3%', right: '3%' };
+	}
+};
+
+const Slide = ({ children, style, components, fonts, cornerImage }: SlideProps) => {
 	useEffect(() => {
 		if(typeof window !== "undefined") {
 			window.confetti = confetti;
@@ -137,9 +149,13 @@ const Slide = ({ children, style, components, fonts }: SlideProps) => {
 	}, []);
 
  	return (
-		<div style={style} className="slide">
+		<div style={{ ...style, position: 'relative' }} className="slide">
 			{fonts?.heading && <link rel="stylesheet" href={fontLink(fonts.heading)} precedence="default" />}
 			{fonts?.body && <link rel="stylesheet" href={fontLink(fonts.body)} precedence="default" />}
+			{cornerImage && <img
+				src={cornerImage.src.startsWith('http') || cornerImage.src.startsWith('/') ? cornerImage.src : `/files/${cornerImage.src}`}
+				style={{ ...positionStyle(cornerImage.position), width: cornerImage.size || 80, height: 'auto' }}
+			/>}
 			<RevealContext.Provider value={{
 				currentReveal,
 			}}>
