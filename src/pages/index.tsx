@@ -431,9 +431,10 @@ const HomePage = () => {
 	// Keyboard shortcuts: undo/redo, copy/paste
 	useEffect(() => {
 		const handler = async (e: KeyboardEvent) => {
-			// Skip if inside an editable element
+			// Skip if inside an editable element or text input
 			const target = e.target as HTMLElement;
-			if (target?.isContentEditable) return;
+			const tag = target?.tagName;
+			if (target?.isContentEditable || tag === 'TEXTAREA' || tag === 'INPUT') return;
 
 			if (!(e.metaKey || e.ctrlKey)) return;
 
