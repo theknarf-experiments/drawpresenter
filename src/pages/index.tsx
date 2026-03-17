@@ -222,13 +222,17 @@ const EditableElement = ({ tag: Tag, nodeType, nodeMatcher, children, source, sl
 			e.stopPropagation();
 			deleteElement();
 			setMode('idle');
-		} else if (mode === 'selected' && (e.metaKey || e.ctrlKey) && e.key === 'c') {
+		} else if (mode === 'selected' && (e.metaKey || e.ctrlKey) && (e.key === 'c' || e.key === 'x')) {
 			e.preventDefault();
 			const found = findMatch();
 			if (found) {
 				const start = found.node.position.start.offset;
 				const end = found.node.position.end.offset;
 				navigator.clipboard.writeText(source.slice(start, end));
+				if (e.key === 'x') {
+					deleteElement();
+					setMode('idle');
+				}
 			}
 		} else if (mode === 'selected' && e.key === 'Escape') {
 			setMode('idle');
@@ -408,10 +412,14 @@ const HomePage = () => {
 				} else {
 					fetch('/doc/undo', { method: 'POST' });
 				}
-			} else if (e.key === 'c' && slideSelected && doc) {
+			} else if ((e.key === 'c' || e.key === 'x') && slideSelected && doc) {
 				e.preventDefault();
 				const source = doc.sections[currentSlide]?.source || '';
 				await navigator.clipboard.writeText('---\n' + source);
+				if (e.key === 'x') {
+					deleteSlide(currentSlide);
+					setSlideSelected(false);
+				}
 			} else if (e.key === 'v' && doc) {
 				e.preventDefault();
 
