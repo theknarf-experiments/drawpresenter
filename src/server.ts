@@ -24,7 +24,7 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 	console.log(projectPath);
 	server.use('/files', express.static(projectPath));
 
-	server.use(express.json());
+	server.use(express.json({ limit: '50mb' }));
 
 	let history: EditHistory | null = null;
 
@@ -176,6 +176,14 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 	server.get('/doc', async (req: Request, res: Response) => {
 		const doc = history ? getCurrentDoc() : await initHistory();
 		res.json({ doc: getDocWithHistory(doc) });
+	});
+
+	server.post('/doc/upload-image', async (req: Request, res: Response) => {
+		const { data, filename } = req.body; // data is base64, filename includes extension
+		const buffer = Buffer.from(data, 'base64');
+		const filePath = path.join(projectPath, filename);
+		await writeFile(filePath, buffer);
+		res.json({ filename });
 	});
 
 	server.post('/doc/slide', async (req: Request, res: Response) => {

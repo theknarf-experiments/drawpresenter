@@ -222,6 +222,14 @@ const EditableElement = ({ tag: Tag, nodeType, nodeMatcher, children, source, sl
 			e.stopPropagation();
 			deleteElement();
 			setMode('idle');
+		} else if (mode === 'selected' && (e.metaKey || e.ctrlKey) && e.key === 'c') {
+			e.preventDefault();
+			const found = findMatch();
+			if (found) {
+				const start = found.node.position.start.offset;
+				const end = found.node.position.end.offset;
+				navigator.clipboard.writeText(source.slice(start, end));
+			}
 		} else if (mode === 'selected' && e.key === 'Escape') {
 			setMode('idle');
 			ref.current?.blur();
@@ -384,21 +392,79 @@ const HomePage = () => {
 		if (index > 0) prev();
 	};
 
-	// Undo/redo with Cmd+Z / Cmd+Shift+Z
+	// Keyboard shortcuts: undo/redo, copy/paste
 	useEffect(() => {
-		const handler = (e: KeyboardEvent) => {
-			if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+		const handler = async (e: KeyboardEvent) => {
+			// Skip if inside an editable element
+			const target = e.target as HTMLElement;
+			if (target?.isContentEditable) return;
+
+			if (!(e.metaKey || e.ctrlKey)) return;
+
+			if (e.key === 'z') {
 				e.preventDefault();
 				if (e.shiftKey) {
 					fetch('/doc/redo', { method: 'POST' });
 				} else {
 					fetch('/doc/undo', { method: 'POST' });
 				}
+			} else if (e.key === 'c' && slideSelected && doc) {
+				e.preventDefault();
+				const source = doc.sections[currentSlide]?.source || '';
+				await navigator.clipboard.writeText('---\n' + source);
+			} else if (e.key === 'v' && doc) {
+				e.preventDefault();
+
+				// Check for image on clipboard
+				const items = await navigator.clipboard.read();
+				let handled = false;
+				for (const item of items) {
+					const imageType = item.types.find(t => t.startsWith('image/'));
+					if (imageType) {
+						const blob = await item.getType(imageType);
+						const ext = imageType.split('/')[1].replace('jpeg', 'jpg');
+						const filename = `image-${Date.now()}.${ext}`;
+
+						const buffer = await blob.arrayBuffer();
+						const base64 = btoa(
+							new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+						);
+
+						await fetch('/doc/upload-image', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ data: base64, filename }),
+						});
+
+						// Insert image into current slide
+						const currentSource = doc.sections[currentSlide]?.source || '';
+						const newSource = currentSource.trimEnd() + `\n\n![](${filename})\n\n`;
+						patchDoc([{ op: 'replace', path: `/sections/${currentSlide}/source`, value: newSource }]);
+						handled = true;
+						break;
+					}
+				}
+
+				if (!handled) {
+					const text = await navigator.clipboard.readText();
+					if (text.trim()) {
+						if (text.startsWith('---\n')) {
+							// Slide paste — insert as new slide after current
+							const source = text.slice(4); // strip the --- prefix
+							patchDoc([{ op: 'add', path: `/sections/${currentSlide + 1}`, value: { source } }]);
+						} else {
+							// Element paste — append to current slide
+							const currentSource = doc.sections[currentSlide]?.source || '';
+							const newSource = currentSource.trimEnd() + `\n\n${text.trim()}\n\n`;
+							patchDoc([{ op: 'replace', path: `/sections/${currentSlide}/source`, value: newSource }]);
+						}
+					}
+				}
 			}
 		};
 		document.addEventListener('keydown', handler);
 		return () => document.removeEventListener('keydown', handler);
-	}, []);
+	}, [slideSelected, currentSlide, doc]);
 
 	useKeybindings({
 		'ArrowDown': () => { next(); setSlideSelected(false); },
