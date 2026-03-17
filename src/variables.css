@@ -11,7 +11,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Helvetica, sans-serif';
+  font-family: var(--font-body), Helvetica, sans-serif;
   container-type: inline-size;
 }
 

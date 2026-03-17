@@ -49,6 +49,9 @@ const useDoc = (): [Document | undefined, boolean, Error | null] => {
 				document.documentElement.style.setProperty(`--${key}`, String(value));
 			});
 		}
+		if (doc?.frontmatter?.font) {
+			document.documentElement.style.setProperty('--font-body', doc.frontmatter.font);
+		}
 	}, [doc]);
 
 	return [doc, isLoading, error];

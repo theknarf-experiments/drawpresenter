@@ -108,9 +108,10 @@ export interface SlideProps {
   children: string;
   style?: React.CSSProperties;
   components?: Record<string, any>;
+  font?: string;
 }
 
-const Slide = ({ children, style, components }: SlideProps) => {
+const Slide = ({ children, style, components, font }: SlideProps) => {
 	useEffect(() => {
 		if(typeof window !== "undefined") {
 			window.confetti = confetti;
@@ -134,6 +135,7 @@ const Slide = ({ children, style, components }: SlideProps) => {
 
  	return (
 		<div style={style} className="slide">
+			{font && <link rel="stylesheet" href={`https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:wght@300;400;500;600;700&display=swap`} precedence="default" />}
 			<RevealContext.Provider value={{
 				currentReveal,
 			}}>

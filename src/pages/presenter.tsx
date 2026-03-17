@@ -86,11 +86,11 @@ const Presenter = () => {
 		<div style={{ display: 'flex', flexDirection: 'row', gap: '3em', margin: '2em' }}>
 			<div>
 				<h2> Current </h2>
-				<Slide style={{ width: '60vw', height: '60vh', fontSize: '18px', overflow: 'hidden' }}>{doc.sections[currentSlide]?.source}</Slide>
+				<Slide style={{ width: '60vw', height: '60vh', fontSize: '18px', overflow: 'hidden' }} font={doc.frontmatter.font}>{doc.sections[currentSlide]?.source}</Slide>
 			</div>
 			<div>
 				<h2> Next </h2>
-				<Slide style={{ width: '30vw', height: '30vh', fontSize: '10px', overflow: 'hidden' }}>{doc.sections[currentSlide + 1]?.source}</Slide>
+				<Slide style={{ width: '30vw', height: '30vh', fontSize: '10px', overflow: 'hidden' }} font={doc.frontmatter.font}>{doc.sections[currentSlide + 1]?.source}</Slide>
 
 				<Timer />
 			</div>

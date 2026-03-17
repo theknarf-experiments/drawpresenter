@@ -63,7 +63,7 @@ const Present = () => {
 			<Command.Item onSelect={openFullscreen}>Fullscreen</Command.Item>
 		</CMDK>
 
-		<Slide style={{ width: '100%', height: '100%', overflow: 'hidden' }}>{doc.sections[currentSlide]?.source}</Slide>
+		<Slide style={{ width: '100%', height: '100%', overflow: 'hidden' }} font={doc.frontmatter.font}>{doc.sections[currentSlide]?.source}</Slide>
 		<StatusIndicator doc={doc} currentSlide={currentSlide} />
 	</div>;
 }
