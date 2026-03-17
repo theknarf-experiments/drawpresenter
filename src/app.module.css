@@ -217,6 +217,19 @@
   margin-left: 16px;
 }
 
+.editableH1 {
+  cursor: text;
+  outline: 2px dotted transparent;
+}
+
+.editableH1:hover {
+  outline-color: rgba(255, 255, 255, 0.5);
+}
+
+.editableH1:focus {
+  outline-color: rgba(255, 255, 255, 0.8);
+}
+
 .print {
   margin-bottom: 5px;
   width: 1856px; /* 1280*1.45 */

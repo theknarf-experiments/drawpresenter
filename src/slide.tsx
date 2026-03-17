@@ -84,25 +84,33 @@ const MDXComponents = {
 	Reveal,
 };
 
-const InnerSlide = memo(({ children }: { children: string }) => {
+const InnerSlide = memo(({ children, components }: { children: string; components?: Record<string, any> }) => {
   const [ MDX, setMDX ] = useState<React.ReactElement | null>(null);
+
+  const mergedComponents = components ? { ...MDXComponents, ...components } : MDXComponents;
 
   useEffect(() => {
   (async () => {
     // @ts-ignore
-    const { default: MDX } = await evaluate(children, { ...runtime, components: MDXComponents });
-    const content = MDX({});
+    const { default: MDX } = await evaluate(children, runtime);
+    const content = MDX({ components: mergedComponents });
 
     setMDX(content);
   })();
-}, [children]);
+}, [children, components]);
 
  	return <div className="innerSlide">
     {MDX}
 	</div>;
 });
 
-const Slide = ({ children, style }: { children: string; style?: React.CSSProperties }) => {
+export interface SlideProps {
+  children: string;
+  style?: React.CSSProperties;
+  components?: Record<string, any>;
+}
+
+const Slide = ({ children, style, components }: SlideProps) => {
 	useEffect(() => {
 		if(typeof window !== "undefined") {
 			window.confetti = confetti;
@@ -129,7 +137,7 @@ const Slide = ({ children, style }: { children: string; style?: React.CSSPropert
 			<RevealContext.Provider value={{
 				currentReveal,
 			}}>
-				<InnerSlide>{children}</InnerSlide>
+				<InnerSlide components={components}>{children}</InnerSlide>
 			</RevealContext.Provider>
 		</div>
 	);

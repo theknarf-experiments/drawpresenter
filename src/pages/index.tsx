@@ -89,9 +89,34 @@ const SlideEditor = ({ source, slideIndex }: { source: string; slideIndex: numbe
 	/>;
 }
 
-const ScaledSlide = ({ children }: { children: string }) => {
+const EditableH1 = ({ children, source, slideIndex }: { children: React.ReactNode; source: string; slideIndex: number }) => {
+	const text = typeof children === 'string' ? children : Array.isArray(children) ? children.join('') : String(children);
+
+	const handleBlur = (e: React.FocusEvent<HTMLHeadingElement>) => {
+		const newText = e.currentTarget.textContent || '';
+		if (newText === text) return;
+		// Replace the first # heading in the markdown source
+		const newSource = source.replace(/^(#\s+)(.*)$/m, `$1${newText}`);
+		if (newSource !== source) {
+			patchDoc([{ op: 'replace', path: `/sections/${slideIndex}/source`, value: newSource }]);
+		}
+	};
+
+	return <h1
+		contentEditable
+		suppressContentEditableWarning
+		onBlur={handleBlur}
+		className={styles.editableH1}
+	>{text}</h1>;
+};
+
+const ScaledSlide = ({ children, slideIndex }: { children: string; slideIndex: number }) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [scale, setScale] = useState(1);
+
+	const editableComponents = {
+		h1: (props: any) => <EditableH1 {...props} source={children} slideIndex={slideIndex} />,
+	};
 
 	useEffect(() => {
 		if (!containerRef.current) return;
@@ -105,7 +130,7 @@ const ScaledSlide = ({ children }: { children: string }) => {
 
 	return <div ref={containerRef} className={styles.scaledSlideContainer}>
 		<div className={styles.scaledSlideInner} style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
-			<Slide style={{ width: 1280, height: 720 }}>{children}</Slide>
+			<Slide style={{ width: 1280, height: 720 }} components={editableComponents}>{children}</Slide>
 		</div>
 	</div>;
 }
@@ -229,7 +254,7 @@ const HomePage = () => {
 			</div>
 			<div className={styles.previewArea}>
 				<div className={styles.previewPane}>
-					<ScaledSlide>{doc.sections[currentSlide]?.source}</ScaledSlide>
+					<ScaledSlide slideIndex={currentSlide}>{doc.sections[currentSlide]?.source}</ScaledSlide>
 				</div>
 				<SlideEditor source={doc.sections[currentSlide]?.source || ''} slideIndex={currentSlide} />
 			</div>
