@@ -17,10 +17,10 @@ const patchDoc = (operations: any[]) =>
 		body: JSON.stringify(operations),
 	});
 
-const Preview = ({ children, font }: { children: string; font?: string }) => {
+const Preview = ({ children, fonts }: { children: string; fonts?: { heading?: string; body?: string } }) => {
 	return <div className={styles.previewOuter}>
 		<div className={styles.previewInner}>
-			<Slide style={{ width: 1280, height: 720 }} font={font}>{children}</Slide>
+			<Slide style={{ width: 1280, height: 720 }} fonts={fonts}>{children}</Slide>
 		</div>
 	</div>;
 }
@@ -255,7 +255,7 @@ const makeEditable = (tag: keyof JSX.IntrinsicElements, nodeType: string, nodeMa
 	);
 };
 
-const ScaledSlide = ({ children, slideIndex, font }: { children: string; slideIndex: number; font?: string }) => {
+const ScaledSlide = ({ children, slideIndex, fonts }: { children: string; slideIndex: number; fonts?: { heading?: string; body?: string } }) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [scale, setScale] = useState(1);
 
@@ -287,7 +287,7 @@ const ScaledSlide = ({ children, slideIndex, font }: { children: string; slideIn
 
 	return <div ref={containerRef} className={styles.scaledSlideContainer}>
 		<div className={styles.scaledSlideInner} style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
-			<Slide style={{ width: 1280, height: 720 }} components={editableComponents} font={font}>{children}</Slide>
+			<Slide style={{ width: 1280, height: 720 }} components={editableComponents} fonts={fonts}>{children}</Slide>
 		</div>
 	</div>;
 }
@@ -399,7 +399,7 @@ const HomePage = () => {
 									onDragEnd={handleDragEnd}>
 									<span className={styles.slideNumber}>{i}</span>
 									<div className={i === currentSlide && slideSelected ? styles.slideThumbSelected : i === currentSlide ? styles.slideThumbActive : styles.slideThumb}>
-										<Preview font={doc.frontmatter.font}>{section.source}</Preview>
+										<Preview fonts={doc.frontmatter.fonts}>{section.source}</Preview>
 									</div>
 								</div>
 							</ContextMenu>
@@ -414,7 +414,7 @@ const HomePage = () => {
 			</div>
 			<div className={styles.previewArea}>
 				<div className={styles.previewPane}>
-					<ScaledSlide slideIndex={currentSlide} font={doc.frontmatter.font}>{doc.sections[currentSlide]?.source}</ScaledSlide>
+					<ScaledSlide slideIndex={currentSlide} fonts={doc.frontmatter.fonts}>{doc.sections[currentSlide]?.source}</ScaledSlide>
 				</div>
 				<SlideEditor source={doc.sections[currentSlide]?.source || ''} slideIndex={currentSlide} />
 			</div>

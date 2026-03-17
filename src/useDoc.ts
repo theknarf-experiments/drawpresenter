@@ -49,8 +49,11 @@ const useDoc = (): [Document | undefined, boolean, Error | null] => {
 				document.documentElement.style.setProperty(`--${key}`, String(value));
 			});
 		}
-		if (doc?.frontmatter?.font) {
-			document.documentElement.style.setProperty('--font-body', doc.frontmatter.font);
+		if (doc?.frontmatter?.fonts?.heading) {
+			document.documentElement.style.setProperty('--font-heading', doc.frontmatter.fonts.heading);
+		}
+		if (doc?.frontmatter?.fonts?.body) {
+			document.documentElement.style.setProperty('--font-body', doc.frontmatter.fonts.body);
 		}
 	}, [doc]);
 

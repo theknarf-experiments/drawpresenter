@@ -5,7 +5,10 @@ import { applyPatch, Operation } from 'fast-json-patch';
 
 export interface Frontmatter {
   [key: string]: any;
-  font?: string;
+  fonts?: {
+    heading?: string;
+    body?: string;
+  };
   colors?: {
     bg?: string;
     text?: string;

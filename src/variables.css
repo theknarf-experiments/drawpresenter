@@ -2,6 +2,7 @@
   --bg: black;
   --text: white;
   --link: white;
+  --font-heading: inherit;
   --font-body: arial;
 }
 
@@ -40,4 +41,13 @@
   padding: 5% 10%;
   box-sizing: border-box;
   font-size: 2.5cqw;
+}
+
+.innerSlide h1,
+.innerSlide h2,
+.innerSlide h3,
+.innerSlide h4,
+.innerSlide h5,
+.innerSlide h6 {
+  font-family: var(--font-heading), var(--font-body), Helvetica, sans-serif;
 }
