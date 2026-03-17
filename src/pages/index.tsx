@@ -90,6 +90,8 @@ const SlideEditor = ({ source, slideIndex }: { source: string; slideIndex: numbe
 	/>;
 }
 
+type Selection = { type: 'slide'; index: number } | { type: 'element'; id: string } | null;
+
 interface EditableProps {
 	tag: keyof JSX.IntrinsicElements;
 	nodeType: string;
@@ -97,6 +99,9 @@ interface EditableProps {
 	children: React.ReactNode;
 	source: string;
 	slideIndex: number;
+	selection: Selection;
+	setSelection: (s: Selection) => void;
+	occurrenceIndex?: number;
 }
 
 // Recursively extract all text values from an AST node
@@ -106,10 +111,14 @@ const getNodeText = (node: any): string => {
 	return '';
 };
 
-// Walk AST depth-first, returning { node, parent, index } for the first match
-const walkTree = (tree: any, matcher: (node: any) => boolean): { node: any; parent: any; index: number } | null => {
+// Walk AST depth-first, returning { node, parent, index } for the Nth match (0-indexed)
+const walkTree = (tree: any, matcher: (node: any) => boolean, skip = 0): { node: any; parent: any; index: number } | null => {
+	let count = 0;
 	const walk = (node: any, parent: any, index: number): { node: any; parent: any; index: number } | null => {
-		if (matcher(node)) return { node, parent, index };
+		if (matcher(node)) {
+			if (count === skip) return { node, parent, index };
+			count++;
+		}
 		if (node.children) {
 			for (let i = 0; i < node.children.length; i++) {
 				const result = walk(node.children[i], node, i);
@@ -143,10 +152,14 @@ const extractText = (children: React.ReactNode): string => {
 	return '';
 };
 
-const EditableElement = ({ tag: Tag, nodeType, nodeMatcher, children, source, slideIndex }: EditableProps) => {
+const EditableElement = ({ tag: Tag, nodeType, nodeMatcher, children, source, slideIndex, selection, setSelection, occurrenceIndex = 0 }: EditableProps) => {
 	const text = extractText(children);
 	const ref = useRef<HTMLElement>(null);
-	const [mode, setMode] = useState<'idle' | 'selected' | 'editing'>('idle');
+	const [editing, setEditing] = useState(false);
+
+	const elementId = `${slideIndex}:${nodeType}:${text}:${occurrenceIndex}`;
+	const isSelected = selection?.type === 'element' && selection.id === elementId;
+	const mode = editing ? 'editing' : isSelected ? 'selected' : 'idle';
 
 	const matcher = nodeMatcher || ((node: any) => node.type === nodeType);
 	// For elements that can appear multiple times (like li), match by text content
@@ -154,8 +167,8 @@ const EditableElement = ({ tag: Tag, nodeType, nodeMatcher, children, source, sl
 
 	const findMatch = () => {
 		const tree = parseMarkdown(source);
-		// Try text-aware match first, fall back to type-only match
-		const result = walkTree(tree, textMatcher) || walkTree(tree, matcher);
+		// Try text-aware match first (skip N occurrences for duplicates), fall back to type-only match
+		const result = walkTree(tree, textMatcher, occurrenceIndex) || walkTree(tree, matcher);
 		if (!result) return null;
 		const textNode = findDeepText(result.node);
 		return { tree, ...result, textNode };
@@ -187,33 +200,36 @@ const EditableElement = ({ tag: Tag, nodeType, nodeMatcher, children, source, sl
 		patchDoc([{ op: 'replace', path: `/sections/${slideIndex}/source`, value: newSource }]);
 	};
 
+	const select = () => setSelection({ type: 'element', id: elementId });
+	const deselect = () => setSelection(null);
+
 	const handleClick = (e: React.MouseEvent) => {
 		e.stopPropagation();
 		if (mode === 'idle') {
-			setMode('selected');
+			select();
 		}
 	};
 
 	const handleDoubleClick = (e: React.MouseEvent) => {
 		e.stopPropagation();
-		setMode('editing');
+		setEditing(true);
 		requestAnimationFrame(() => {
 			ref.current?.focus();
-			const selection = window.getSelection();
-			if (selection && ref.current) {
+			const sel = window.getSelection();
+			if (sel && ref.current) {
 				const range = document.createRange();
 				range.selectNodeContents(ref.current);
-				selection.removeAllRanges();
-				selection.addRange(range);
+				sel.removeAllRanges();
+				sel.addRange(range);
 			}
 		});
 	};
 
 	const handleBlur = () => {
-		if (mode === 'editing') {
+		if (editing) {
 			save();
+			setEditing(false);
 		}
-		setMode('idle');
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -221,7 +237,7 @@ const EditableElement = ({ tag: Tag, nodeType, nodeMatcher, children, source, sl
 			e.preventDefault();
 			e.stopPropagation();
 			deleteElement();
-			setMode('idle');
+			deselect();
 		} else if (mode === 'selected' && (e.metaKey || e.ctrlKey) && (e.key === 'c' || e.key === 'x')) {
 			e.preventDefault();
 			const found = findMatch();
@@ -231,15 +247,16 @@ const EditableElement = ({ tag: Tag, nodeType, nodeMatcher, children, source, sl
 				navigator.clipboard.writeText(source.slice(start, end));
 				if (e.key === 'x') {
 					deleteElement();
-					setMode('idle');
+					deselect();
 				}
 			}
 		} else if (mode === 'selected' && e.key === 'Escape') {
-			setMode('idle');
+			deselect();
 			ref.current?.blur();
 		} else if (mode === 'editing' && e.key === 'Escape') {
 			e.preventDefault();
-			setMode('selected');
+			setEditing(false);
+			select();
 			window.getSelection()?.removeAllRanges();
 		} else if (mode === 'selected' && e.key === 'Enter') {
 			e.preventDefault();
@@ -248,11 +265,11 @@ const EditableElement = ({ tag: Tag, nodeType, nodeMatcher, children, source, sl
 	};
 
 	useEffect(() => {
-		if (mode === 'selected') {
+		if (isSelected && !editing) {
 			ref.current?.focus();
 			window.getSelection()?.removeAllRanges();
 		}
-	}, [mode]);
+	}, [isSelected, editing]);
 
 	const className = mode === 'editing' ? styles.editableEditing
 		: mode === 'selected' ? styles.editableSelected
@@ -272,14 +289,26 @@ const EditableElement = ({ tag: Tag, nodeType, nodeMatcher, children, source, sl
 };
 
 const makeEditable = (tag: keyof JSX.IntrinsicElements, nodeType: string, nodeMatcher?: (node: any) => boolean) => {
-	return (props: any & { source: string; slideIndex: number }) => (
+	return (props: any & { source: string; slideIndex: number; selection: Selection; setSelection: (s: Selection) => void }) => (
 		<EditableElement tag={tag} nodeType={nodeType} nodeMatcher={nodeMatcher} {...props} />
 	);
 };
 
-const ScaledSlide = ({ children, slideIndex, fonts }: { children: string; slideIndex: number; fonts?: { heading?: string; body?: string } }) => {
+const ScaledSlide = ({ children, slideIndex, fonts, selection, setSelection }: { children: string; slideIndex: number; fonts?: { heading?: string; body?: string }; selection: Selection; setSelection: (s: Selection) => void }) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [scale, setScale] = useState(1);
+
+	const counters = useRef<Map<string, number>>(new Map());
+	// Reset counters each render so occurrence indices are stable
+	counters.current.clear();
+
+	const withCounter = (Component: any) => (props: any) => {
+		const text = extractText(props.children);
+		const key = `${props.nodeType || ''}:${text}`;
+		const idx = counters.current.get(key) || 0;
+		counters.current.set(key, idx + 1);
+		return <Component {...props} source={children} slideIndex={slideIndex} selection={selection} setSelection={setSelection} occurrenceIndex={idx} />;
+	};
 
 	const editableComponents = Object.fromEntries(
 		[
@@ -293,7 +322,7 @@ const ScaledSlide = ({ children, slideIndex, fonts }: { children: string; slideI
 			['li', makeEditable('li', 'listItem')],
 		].map(([tag, Component]) => [
 			tag,
-			(props: any) => <Component {...props} source={children} slideIndex={slideIndex} />,
+			withCounter(Component),
 		])
 	);
 
@@ -354,8 +383,10 @@ const AddSlideButton = ({ onClick }: { onClick: () => void }) => {
 
 const HomePage = () => {
 	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides();
-	const [slideSelected, setSlideSelected] = useState(false);
+	const [selection, setSelection] = useState<Selection>(null);
 	const [showHistory, setShowHistory] = useState(false);
+
+	const slideSelected = selection?.type === 'slide' && selection.index === currentSlide;
 	const [dragIndex, setDragIndex] = useState<number | null>(null);
 	const [dropTarget, setDropTarget] = useState<number | null>(null);
 
@@ -418,7 +449,7 @@ const HomePage = () => {
 				await navigator.clipboard.writeText('---\n' + source);
 				if (e.key === 'x') {
 					deleteSlide(currentSlide);
-					setSlideSelected(false);
+					setSelection(null);
 				}
 			} else if (e.key === 'v' && doc) {
 				e.preventDefault();
@@ -472,16 +503,16 @@ const HomePage = () => {
 		};
 		document.addEventListener('keydown', handler);
 		return () => document.removeEventListener('keydown', handler);
-	}, [slideSelected, currentSlide, doc]);
+	}, [selection, currentSlide, doc]);
 
 	useKeybindings({
-		'ArrowDown': () => { next(); setSlideSelected(false); },
-		'ArrowRight': () => { next(); setSlideSelected(false); },
-		'ArrowUp': () => { prev(); setSlideSelected(false); },
-		'ArrowLeft': () => { prev(); setSlideSelected(false); },
-		'Enter': () => { if (!slideSelected) setSlideSelected(true); },
-		'Escape': () => { if (slideSelected) setSlideSelected(false); },
-		'Backspace': () => { if (slideSelected) { deleteSlide(currentSlide); setSlideSelected(false); } },
+		'ArrowDown': () => { next(); setSelection(null); },
+		'ArrowRight': () => { next(); setSelection(null); },
+		'ArrowUp': () => { prev(); setSelection(null); },
+		'ArrowLeft': () => { prev(); setSelection(null); },
+		'Enter': () => { if (!slideSelected) setSelection({ type: 'slide', index: currentSlide }); },
+		'Escape': () => { if (selection) setSelection(null); },
+		'Backspace': () => { if (slideSelected) { deleteSlide(currentSlide); setSelection(null); } },
 	});
 
 	const startPresentation = () => {
@@ -495,7 +526,7 @@ const HomePage = () => {
 	if (error) return <div>Error: {error.message}</div>;
 	if (!doc) return <div>No document loaded</div>;
 
-	return <div className={styles.overview}>
+	return <div className={styles.overview} onClick={() => setSelection(null)}>
 		<CMDK>
 			<Command.Item onSelect={startPresentation}>Start presentation</Command.Item>
 			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>
@@ -528,7 +559,7 @@ const HomePage = () => {
 										dropTarget === i && dragIndex !== null && dragIndex > i ? styles.slideRowDropAbove : '',
 										dropTarget === i && dragIndex !== null && dragIndex < i ? styles.slideRowDropBelow : '',
 									].join(' ')}
-									onClick={() => { goto(i); setSlideSelected(i === currentSlide ? !slideSelected : false); }}
+									onClick={(e) => { e.stopPropagation(); goto(i); setSelection({ type: 'slide', index: i }); }}
 									draggable
 									onDragStart={(e) => handleDragStart(e, i)}
 									onDragOver={(e) => handleDragOver(e, i)}
@@ -536,7 +567,7 @@ const HomePage = () => {
 									onDrop={(e) => handleDrop(e, i)}
 									onDragEnd={handleDragEnd}>
 									<span className={styles.slideNumber}>{i}</span>
-									<div className={i === currentSlide && slideSelected ? styles.slideThumbSelected : i === currentSlide ? styles.slideThumbActive : styles.slideThumb}>
+									<div className={selection?.type === 'slide' && selection.index === i ? styles.slideThumbSelected : i === currentSlide ? styles.slideThumbActive : styles.slideThumb}>
 										<Preview fonts={doc.frontmatter.fonts}>{section.source}</Preview>
 									</div>
 								</div>
@@ -552,7 +583,7 @@ const HomePage = () => {
 			</div>
 			<div className={styles.previewArea}>
 				<div className={styles.previewPane}>
-					<ScaledSlide slideIndex={currentSlide} fonts={doc.frontmatter.fonts}>{doc.sections[currentSlide]?.source}</ScaledSlide>
+					<ScaledSlide slideIndex={currentSlide} fonts={doc.frontmatter.fonts} selection={selection} setSelection={setSelection}>{doc.sections[currentSlide]?.source}</ScaledSlide>
 				</div>
 				<SlideEditor source={doc.sections[currentSlide]?.source || ''} slideIndex={currentSlide} />
 			</div>
