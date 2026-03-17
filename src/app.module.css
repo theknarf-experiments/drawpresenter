@@ -68,6 +68,153 @@
   background: rgba(0, 0, 0, 0.1);
 }
 
+.overview {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.toolbar {
+  composes: container;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toolbarLinks {
+  display: flex;
+  gap: 8px;
+}
+
+.mainArea {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+}
+
+.previewArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.previewPane {
+  flex: 1;
+  display: flex;
+  background: #f0f0f0;
+  padding: 10px;
+  min-height: 0;
+}
+
+.scaledSlideContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.scaledSlideInner {
+  width: 1280px;
+  height: 720px;
+  flex-shrink: 0;
+}
+
+.slideEditor {
+  width: 100%;
+  height: 200px;
+  font-family: monospace;
+  font-size: 14px;
+  padding: 8px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.previewOuter {
+  width: 256px;
+  height: 144px;
+  overflow: hidden;
+  border: 1px solid black;
+  margin: 5px;
+}
+
+.previewInner {
+  transform: scale(0.2);
+  transform-origin: top left;
+  width: 1280px;
+  height: 720px;
+}
+
+.slideRow {
+  display: flex;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.slideRowDragging {
+  composes: slideRow;
+  opacity: 0.4;
+}
+
+.slideRowDropAbove {
+  border-top: 3px solid #0066ff;
+}
+
+.slideRowDropBelow {
+  border-bottom: 3px solid #0066ff;
+}
+
+.slideNumber {
+  margin-right: 6px;
+}
+
+.themeSettings {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.colorInput {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.colorInputText {
+  width: 70px;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.addSlideButton {
+  width: 256px;
+  margin-left: 5px;
+  padding: 4px;
+  cursor: pointer;
+  opacity: 0.5;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.addSlideRow {
+  display: flex;
+}
+
+.addSlideSpacer {
+  visibility: hidden;
+  margin-right: 6px;
+}
+
+.bottomBar {
+  composes: container;
+}
+
+.bottomBarHint {
+  margin-left: 16px;
+}
+
 .print {
   margin-bottom: 5px;
   width: 1856px; /* 1280*1.45 */

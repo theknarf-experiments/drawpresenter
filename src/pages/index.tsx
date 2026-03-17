@@ -17,28 +17,19 @@ const patchDoc = (operations: any[]) =>
 	});
 
 const Preview = ({ children }) => {
-	return <div style={{
-		width: 256, height: 144,
-		overflow: 'hidden',
-		border: '1px solid black',
-		margin: 5,
-	}}>
-		<div style={{
-			transform: 'scale(0.2)',
-			transformOrigin: 'top left',
-			width: 1280, height: 720,
-		}}>
+	return <div className={styles.previewOuter}>
+		<div className={styles.previewInner}>
 			<Slide style={{ width: 1280, height: 720 }}>{children}</Slide>
 		</div>
 	</div>;
 }
 
 const ColorInput = ({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) => {
-	return <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+	return <label className={styles.colorInput}>
 		<span>{label}</span>
 		<input type="color" value={value} onChange={(e) => onChange(e.target.value)} />
 		<input type="text" value={value} onChange={(e) => onChange(e.target.value)}
-			style={{ width: '70px', fontFamily: 'monospace', fontSize: '12px' }} />
+			className={styles.colorInputText} />
 	</label>;
 }
 
@@ -57,7 +48,7 @@ const ThemeSettings = ({ frontmatter }: { frontmatter: Frontmatter }) => {
 		});
 	};
 
-	return <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+	return <div className={styles.themeSettings}>
 		<strong>Theme</strong>
 		<ColorInput label="bg" value={colors.bg || '#000000'} onChange={(v) => updateColor('bg', v)} />
 		<ColorInput label="text" value={colors.text || '#ffffff'} onChange={(v) => updateColor('text', v)} />
@@ -69,7 +60,6 @@ const SlideEditor = ({ source, slideIndex }: { source: string; slideIndex: numbe
 	const [value, setValue] = useState(source);
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	// Sync from external changes (e.g. SSE updates)
 	useEffect(() => {
 		setValue(source);
 	}, [source]);
@@ -95,15 +85,7 @@ const SlideEditor = ({ source, slideIndex }: { source: string; slideIndex: numbe
 	return <textarea
 		value={value}
 		onChange={(e) => onChange(e.target.value)}
-		style={{
-			width: '100%',
-			height: '200px',
-			fontFamily: 'monospace',
-			fontSize: '14px',
-			padding: '8px',
-			boxSizing: 'border-box',
-			resize: 'vertical',
-		}}
+		className={styles.slideEditor}
 	/>;
 }
 
@@ -121,28 +103,15 @@ const ScaledSlide = ({ children }: { children: string }) => {
 		return () => observer.disconnect();
 	}, []);
 
-	return <div ref={containerRef} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-		<div style={{
-			width: 1280, height: 720,
-			transform: `scale(${scale})`,
-			transformOrigin: 'center center',
-			flexShrink: 0,
-		}}>
+	return <div ref={containerRef} className={styles.scaledSlideContainer}>
+		<div className={styles.scaledSlideInner} style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
 			<Slide style={{ width: 1280, height: 720 }}>{children}</Slide>
 		</div>
 	</div>;
 }
 
 const AddSlideButton = ({ onClick }: { onClick: () => void }) => {
-	return <button onClick={onClick} style={{
-		width: 256,
-		marginLeft: 5,
-		padding: '4px',
-		cursor: 'pointer',
-		opacity: 0.5,
-		marginBottom: '12px',
-		boxSizing: 'border-box',
-	}}>+ Add slide</button>;
+	return <button onClick={onClick} className={styles.addSlideButton}>+ Add slide</button>;
 }
 
 const HomePage = () => {
@@ -206,19 +175,19 @@ const HomePage = () => {
 	if (error) return <div>Error: {error.message}</div>;
 	if (!doc) return <div>No document loaded</div>;
 
-	return <div className={styles.present} style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+	return <div className={styles.overview}>
 		<CMDK>
 			<Command.Item onSelect={startPresentation}>Start presentation</Command.Item>
 			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>
 		</CMDK>
-		<div className={styles.container} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-			<div style={{ display: 'flex', gap: '8px' }}>
+		<div className={styles.toolbar}>
+			<div className={styles.toolbarLinks}>
 				<LinkButton href="/present">Start presentation</LinkButton>
 				<LinkButton href="/print">Open for print</LinkButton>
 			</div>
 			<ThemeSettings frontmatter={doc.frontmatter} />
 		</div>
-		<div style={{ display: 'flex', flexDirection: 'row', flex: 1, minHeight: 0 }}>
+		<div className={styles.mainArea}>
 			<div className={styles.slideList}>
 			{
 				doc.sections.map((section, i) => (
@@ -231,22 +200,19 @@ const HomePage = () => {
 								{ label: 'Delete slide', onClick: () => deleteSlide(i) },
 								{ label: 'Present from here', onClick: () => { window.location.href = `/present#${i}`; } },
 							]}>
-								<div onClick={() => goto(i)}
+								<div className={[
+										dragIndex === i ? styles.slideRowDragging : styles.slideRow,
+										dropTarget === i && dragIndex !== null && dragIndex > i ? styles.slideRowDropAbove : '',
+										dropTarget === i && dragIndex !== null && dragIndex < i ? styles.slideRowDropBelow : '',
+									].join(' ')}
+									onClick={() => goto(i)}
 									draggable
 									onDragStart={(e) => handleDragStart(e, i)}
 									onDragOver={(e) => handleDragOver(e, i)}
 									onDragLeave={handleDragLeave}
 									onDrop={(e) => handleDrop(e, i)}
-									onDragEnd={handleDragEnd}
-									style={{
-										display: 'flex',
-										cursor: 'pointer',
-										marginBottom: '8px',
-										opacity: dragIndex === i ? 0.4 : 1,
-										borderTop: dropTarget === i && dragIndex !== null && dragIndex > i ? '3px solid #0066ff' : undefined,
-										borderBottom: dropTarget === i && dragIndex !== null && dragIndex < i ? '3px solid #0066ff' : undefined,
-									}}>
-									<span style={{ marginRight: '6px' }}>{i}</span>
+									onDragEnd={handleDragEnd}>
+									<span className={styles.slideNumber}>{i}</span>
 									<div className={i === currentSlide ? styles.slideThumbActive : styles.slideThumb}>
 										<Preview>{section.source}</Preview>
 									</div>
@@ -256,23 +222,23 @@ const HomePage = () => {
 					</ViewTransition>
 				))
 			}
-			<div style={{ display: 'flex' }}>
-				<span style={{ visibility: 'hidden', marginRight: '6px' }}>0</span>
+			<div className={styles.addSlideRow}>
+				<span className={styles.addSlideSpacer}>0</span>
 				<AddSlideButton onClick={() => patchDoc([{ op: 'add', path: `/sections/-`, value: { source: '\n# New slide\n\n' } }])} />
 			</div>
 			</div>
-			<div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-				<div style={{ flex: 1, display: 'flex', background: '#f0f0f0', padding: '10px', minHeight: 0 }}>
+			<div className={styles.previewArea}>
+				<div className={styles.previewPane}>
 					<ScaledSlide>{doc.sections[currentSlide]?.source}</ScaledSlide>
 				</div>
 				<SlideEditor source={doc.sections[currentSlide]?.source || ''} slideIndex={currentSlide} />
 			</div>
 		</div>
-		<div className={styles.container}>
+		<div className={styles.bottomBar}>
 			<Button onClick={prev}>Prev</Button>
 			<span>{currentSlide}</span>
 			<Button onClick={next}>Next</Button>
-			<span style={{ marginLeft: '16px' }}>Hit cmd+k for more actions</span>
+			<span className={styles.bottomBarHint}>Hit cmd+k for more actions</span>
 		</div>
 	</div>;
 }
