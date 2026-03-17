@@ -32,33 +32,29 @@ const parse = (text: string, filePath: string): Document => {
 	// Try to parse frontmatter either in section 0 or 1
 	if(sections[0] !== "") {
 		try {
-			frontmatter = yaml.load(sections[0]) as Frontmatter || {};
-			sections = sections.slice(1);
+			const parsed = yaml.load(sections[0]);
+			if (parsed && typeof parsed === 'object') {
+				frontmatter = parsed as Frontmatter;
+				sections = sections.slice(1);
+			}
 		} catch(e) {
 			// If it's not yaml in a frontmatter then do nothing
 		}
 	} else if(sections[1] !== "") {
 		try {
-			frontmatter = yaml.load(sections[1]) as Frontmatter || {};
-			sections = sections.slice(2);
+			const parsed = yaml.load(sections[1]);
+			if (parsed && typeof parsed === 'object') {
+				frontmatter = parsed as Frontmatter;
+				sections = sections.slice(2);
+			}
 		} catch(e) {
 			// If it's not yaml in a frontmatter then do nothing
 		}
 	}
 
-	const sectionObjects: Section[] = sections.map(section => {
-		let source = section;
-		// Rewrite image src to use /files/ for relative paths
-		source = source.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
-			if (!src.startsWith('http') && !src.startsWith('/')) {
-				src = '/files/' + src;
-			}
-			return `![${alt}](${src})`;
-		});
-		return {
-			source,
-		};
-	});
+	const sectionObjects: Section[] = sections.map(section => ({
+		source: section,
+	}));
 
 	//console.log(sections)
 
@@ -70,18 +66,19 @@ const parse = (text: string, filePath: string): Document => {
 };
 
 const serialize = (doc: Document): string => {
-	// Map over objects doc.sections
-	//  - turn frontmatter and mdx back to markdown
-	// join on newline
-	// return markdown text
-	return '';
-}
+	const parts: string[] = [];
 
-// doc.merge(doc2);
-// doc.section[0].isFrontmatter?
-// doc.section.add
-// doc.section.remove
-// doc.section[].
+	// Frontmatter
+	if (Object.keys(doc.frontmatter).length > 0) {
+		const frontmatterYaml = yaml.dump(doc.frontmatter, { indent: 4 }).trimEnd();
+		parts.push(`---\n${frontmatterYaml}\n---\n`);
+	}
+
+	// Sections joined by ---
+	parts.push(doc.sections.map(s => s.source).join('---\n'));
+
+	return parts.join('');
+}
 
 export const openDocument = async (filePath: string): Promise<Document> => {
 	try {
