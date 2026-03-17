@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Slide from '../slide';
+import FittedSlide from '../components/fitted-slide';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
 import styles from '../app.module.css';
@@ -88,7 +88,7 @@ const Presenter = () => {
 
 	const slideDrawings = (doc as any).drawings?.[currentSlide];
 
-	return <div className={styles.present} style={{ touchAction: drawMode ? 'none' : 'auto' }}>
+	return <div className={styles.present} style={{ touchAction: drawMode ? 'none' : 'auto', display: 'flex', flexDirection: 'column' }}>
 		<CMDK>
 			<Command.Item onSelect={openOverview}>Open overview</Command.Item>
 			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>
@@ -100,15 +100,17 @@ const Presenter = () => {
 			})}>Clear drawings</Command.Item>
 		</CMDK>
 
-		<div style={{ display: 'flex', flexDirection: 'row', gap: '3em', margin: '2em' }}>
-			<div style={{ position: 'relative' }}>
-				<h2> Current </h2>
-				<Slide style={{ width: '60vw', height: '60vh', fontSize: '18px', overflow: 'hidden' }} fonts={doc.frontmatter.fonts}>{doc.sections[currentSlide]?.source}</Slide>
-				<DrawingOverlay slideIndex={currentSlide} strokes={slideDrawings} enabled={drawMode} color={drawColor} />
+		<div style={{ display: 'flex', flexDirection: 'row', gap: '0.5em', padding: '0.5em', flex: 1, minHeight: 0 }}>
+			<div style={{ flex: 2, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+				<h2 style={{ margin: '0 0 0.25em' }}> Current </h2>
+				<FittedSlide
+					fonts={doc.frontmatter.fonts}
+					overlay={<DrawingOverlay slideIndex={currentSlide} strokes={slideDrawings} enabled={drawMode} color={drawColor} />}
+				>{doc.sections[currentSlide]?.source}</FittedSlide>
 			</div>
-			<div>
-				<h2> Next </h2>
-				<Slide style={{ width: '30vw', height: '30vh', fontSize: '10px', overflow: 'hidden' }} fonts={doc.frontmatter.fonts}>{doc.sections[currentSlide + 1]?.source}</Slide>
+			<div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+				<h2 style={{ margin: '0 0 0.25em' }}> Next </h2>
+				<FittedSlide fonts={doc.frontmatter.fonts}>{doc.sections[currentSlide + 1]?.source}</FittedSlide>
 
 				<Timer />
 

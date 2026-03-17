@@ -8,6 +8,7 @@ import { Command } from 'cmdk';
 import { Frontmatter } from '../document';
 import { Button, LinkButton } from '../components/button';
 import ContextMenu from '../components/context-menu';
+import FittedSlide from '../components/fitted-slide';
 import { parseMarkdown, serializeMarkdown } from '../mdast-utils';
 
 const patchDoc = (operations: any[]) =>
@@ -295,11 +296,7 @@ const makeEditable = (tag: keyof JSX.IntrinsicElements, nodeType: string, nodeMa
 };
 
 const ScaledSlide = ({ children, slideIndex, fonts, selection, setSelection }: { children: string; slideIndex: number; fonts?: { heading?: string; body?: string }; selection: Selection; setSelection: (s: Selection) => void }) => {
-	const containerRef = useRef<HTMLDivElement>(null);
-	const [scale, setScale] = useState(1);
-
 	const counters = useRef<Map<string, number>>(new Map());
-	// Reset counters each render so occurrence indices are stable
 	counters.current.clear();
 
 	const withCounter = (Component: any) => (props: any) => {
@@ -326,21 +323,7 @@ const ScaledSlide = ({ children, slideIndex, fonts, selection, setSelection }: {
 		])
 	);
 
-	useEffect(() => {
-		if (!containerRef.current) return;
-		const observer = new ResizeObserver((entries) => {
-			const { width, height } = entries[0].contentRect;
-			setScale(Math.min(width / 1280, height / 720));
-		});
-		observer.observe(containerRef.current);
-		return () => observer.disconnect();
-	}, []);
-
-	return <div ref={containerRef} className={styles.scaledSlideContainer}>
-		<div className={styles.scaledSlideInner} style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
-			<Slide style={{ width: 1280, height: 720 }} components={editableComponents} fonts={fonts}>{children}</Slide>
-		</div>
-	</div>;
+	return <FittedSlide fonts={fonts} components={editableComponents}>{children}</FittedSlide>;
 }
 
 const HistoryPanel = ({ history }: { history: any }) => {
