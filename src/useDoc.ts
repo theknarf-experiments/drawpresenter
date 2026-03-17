@@ -34,7 +34,8 @@ const useDoc = (): [Document | undefined, boolean, Error | null] => {
 						prev.sections.every((s, i) => s.id === newDoc.sections[i].id && s.source === newDoc.sections[i].source) &&
 						JSON.stringify(prev.frontmatter) === JSON.stringify(newDoc.frontmatter) &&
 						(prev as any).history?.pointer === (newDoc as any).history?.pointer &&
-						(prev as any).presentationSlide === (newDoc as any).presentationSlide) {
+						(prev as any).presentationSlide === (newDoc as any).presentationSlide &&
+						JSON.stringify((prev as any).drawings) === JSON.stringify((newDoc as any).drawings)) {
 						return prev;
 					}
 					return newDoc;

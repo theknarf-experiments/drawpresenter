@@ -5,6 +5,7 @@ import useKeybindings from '../useKeybindings';
 import styles from '../app.module.css';
 import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
+import DrawingOverlay from '../components/drawing-overlay';
 // Shows a bar at the bottom of the presentation giving a hint on how far in the presentation you are
 const StatusIndicator = ({ doc, currentSlide }) => {
 	const max = doc.sections.length - 1;
@@ -51,10 +52,27 @@ const Timer = () => {
 
 const Presenter = () => {
 	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides({ hashRouting: true, syncPresentation: true });
+	const [drawMode, setDrawMode] = useState(false);
+	const [drawColor, setDrawColor] = useState('red');
+
+	const drawColors = [
+		{ name: 'Red', value: '#ff4444' },
+		{ name: 'Blue', value: '#4488ff' },
+		{ name: 'Green', value: '#44cc44' },
+		{ name: 'Yellow', value: '#ffcc00' },
+		{ name: 'White', value: '#ffffff' },
+		{ name: 'Orange', value: '#ff8800' },
+	];
 
 	useKeybindings({
 		'ArrowRight': next,
 		'ArrowLeft': prev,
+		'd': () => setDrawMode(d => !d),
+		'c': () => fetch('/doc/drawing/clear', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ slide: currentSlide }),
+		}),
 	});
 
 	const openOverview = () => {
@@ -68,22 +86,58 @@ const Presenter = () => {
 	if (error) return <div>Error: {error.message}</div>;
 	if (!doc) return <div>No document loaded</div>;
 
-	return <div className={styles.present}>
+	const slideDrawings = (doc as any).drawings?.[currentSlide];
+
+	return <div className={styles.present} style={{ touchAction: drawMode ? 'none' : 'auto' }}>
 		<CMDK>
 			<Command.Item onSelect={openOverview}>Open overview</Command.Item>
 			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>
+			<Command.Item onSelect={() => setDrawMode(d => !d)}>Toggle drawing {drawMode ? '(on)' : '(off)'}</Command.Item>
+			<Command.Item onSelect={() => fetch('/doc/drawing/clear', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ slide: currentSlide }),
+			})}>Clear drawings</Command.Item>
 		</CMDK>
 
 		<div style={{ display: 'flex', flexDirection: 'row', gap: '3em', margin: '2em' }}>
-			<div>
+			<div style={{ position: 'relative' }}>
 				<h2> Current </h2>
 				<Slide style={{ width: '60vw', height: '60vh', fontSize: '18px', overflow: 'hidden' }} fonts={doc.frontmatter.fonts}>{doc.sections[currentSlide]?.source}</Slide>
+				<DrawingOverlay slideIndex={currentSlide} strokes={slideDrawings} enabled={drawMode} color={drawColor} />
 			</div>
 			<div>
 				<h2> Next </h2>
 				<Slide style={{ width: '30vw', height: '30vh', fontSize: '10px', overflow: 'hidden' }} fonts={doc.frontmatter.fonts}>{doc.sections[currentSlide + 1]?.source}</Slide>
 
 				<Timer />
+
+				<div style={{ marginTop: '1em' }}>
+					<button
+						onClick={() => setDrawMode(d => !d)}
+						style={{ padding: '6px 12px', marginRight: '8px', background: drawMode ? '#444' : '#eee', color: drawMode ? 'white' : 'black', border: '1px solid #999', borderRadius: '4px', cursor: 'pointer' }}
+					>{drawMode ? 'Drawing ON' : 'Drawing OFF'}</button>
+					<button
+						onClick={() => fetch('/doc/drawing/clear', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slide: currentSlide }) })}
+						style={{ padding: '6px 12px', marginRight: '16px', border: '1px solid #999', borderRadius: '4px', cursor: 'pointer' }}
+					>Clear</button>
+					{drawColors.map(c => (
+						<button
+							key={c.value}
+							onClick={() => { setDrawColor(c.value); setDrawMode(true); }}
+							title={c.name}
+							style={{
+								width: 28, height: 28,
+								borderRadius: '50%',
+								background: c.value,
+								border: drawColor === c.value ? '3px solid white' : '2px solid #666',
+								cursor: 'pointer',
+								marginRight: 4,
+								boxShadow: drawColor === c.value ? '0 0 4px rgba(0,0,0,0.5)' : 'none',
+							}}
+						/>
+					))}
+				</div>
 			</div>
 		</div>
 	</div>;

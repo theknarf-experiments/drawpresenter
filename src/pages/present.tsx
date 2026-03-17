@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import Slide from '../slide';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
 import styles from '../app.module.css';
 import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
+import DrawingOverlay from '../components/drawing-overlay';
+
 const openFullscreen = () => {
 	const elem = document.documentElement as any;
   if (elem.requestFullscreen) {
@@ -27,9 +30,17 @@ const StatusIndicator = ({ doc, currentSlide }) => {
 
 const Present = () => {
 	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides({ hashRouting: true, syncPresentation: true });
+	const [drawMode, setDrawMode] = useState(false);
+
 	useKeybindings({
 		'ArrowRight': next,
 		'ArrowLeft': prev,
+		'd': () => setDrawMode(d => !d),
+		'c': () => fetch('/doc/drawing/clear', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ slide: currentSlide }),
+		}),
 	});
 
 	const openOverview = () => {
@@ -46,15 +57,24 @@ const Present = () => {
 	if (error) return <div>Error: {error.message}</div>;
 	if (!doc) return <div>No document loaded</div>;
 
-	return <div className={styles.present}>
+	const slideDrawings = (doc as any).drawings?.[currentSlide];
+
+	return <div className={styles.present} style={{ position: 'relative' }}>
 		<CMDK>
 			<Command.Item onSelect={openOverview}>Open overview</Command.Item>
 			<Command.Item onSelect={openForPrint}>Open for print</Command.Item>
 			<Command.Item onSelect={openPresenterView}>Open presenter view</Command.Item>
 			<Command.Item onSelect={openFullscreen}>Fullscreen</Command.Item>
+			<Command.Item onSelect={() => setDrawMode(d => !d)}>Toggle drawing {drawMode ? '(on)' : '(off)'}</Command.Item>
+			<Command.Item onSelect={() => fetch('/doc/drawing/clear', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ slide: currentSlide }),
+			})}>Clear drawings</Command.Item>
 		</CMDK>
 
 		<Slide style={{ width: '100%', height: '100%', overflow: 'hidden' }} fonts={doc.frontmatter.fonts}>{doc.sections[currentSlide]?.source}</Slide>
+		<DrawingOverlay slideIndex={currentSlide} strokes={slideDrawings} enabled={drawMode} />
 		<StatusIndicator doc={doc} currentSlide={currentSlide} />
 	</div>;
 }

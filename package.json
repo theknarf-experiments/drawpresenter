@@ -18,6 +18,7 @@
     "js-yaml": "^4.1.0",
     "mdx-embed": "^1.1.2",
     "mermaid": "^10.9.4",
+    "perfect-freehand": "^1.2.3",
     "react": "19.3.0-canary-c80a0750-20260312",
     "react-dom": "19.3.0-canary-c80a0750-20260312",
     "react-router-dom": "^7.5.0",

@@ -1,6 +1,8 @@
 html, body {
   margin: 0;
   padding: 0;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
 }
 
 :root {

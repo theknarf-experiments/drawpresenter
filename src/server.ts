@@ -84,13 +84,19 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 
 	// Presentation state
 	let presentationSlide = 0;
+	// Drawings: per-slide array of strokes with color (ephemeral, not persisted)
+	interface Stroke { points: number[][]; color: string; }
+	const drawings: Map<number, Stroke[]> = new Map();
 
 	// SSE: track connected clients
 	const sseClients = new Set<Response>();
 
+	const getDrawings = () => Object.fromEntries(drawings.entries());
+
 	const getDocWithHistory = (doc: Document) => ({
 		...doc,
 		presentationSlide,
+		drawings: getDrawings(),
 		history: history ? {
 			pointer: history.pointer,
 			totalEntries: history.entries.length,
@@ -184,6 +190,27 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 		const filePath = path.join(projectPath, filename);
 		await writeFile(filePath, buffer);
 		res.json({ filename });
+	});
+
+	server.post('/doc/drawing', async (req: Request, res: Response) => {
+		const { slide, stroke, color = 'red' } = req.body;
+		if (!drawings.has(slide)) drawings.set(slide, []);
+		drawings.get(slide)!.push({ points: stroke, color });
+		const doc = history ? getCurrentDoc() : await initHistory();
+		notifyClients(doc);
+		res.json({ ok: true });
+	});
+
+	server.post('/doc/drawing/clear', async (req: Request, res: Response) => {
+		const { slide } = req.body;
+		if (slide !== undefined) {
+			drawings.delete(slide);
+		} else {
+			drawings.clear();
+		}
+		const doc = history ? getCurrentDoc() : await initHistory();
+		notifyClients(doc);
+		res.json({ ok: true });
 	});
 
 	server.post('/doc/slide', async (req: Request, res: Response) => {

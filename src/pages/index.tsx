@@ -536,6 +536,7 @@ const HomePage = () => {
 		<div className={styles.toolbar}>
 			<div className={styles.toolbarLinks}>
 				<LinkButton href="/present">Start presentation</LinkButton>
+				<LinkButton href="/presenter">Presenter mode</LinkButton>
 				<LinkButton href="/print">Open for print</LinkButton>
 				<Button onClick={() => fetch('/doc/undo', { method: 'POST' })}>Undo</Button>
 				<Button onClick={() => fetch('/doc/redo', { method: 'POST' })}>Redo</Button>
