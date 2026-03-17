@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
 import styles from '../app.module.css';
@@ -54,6 +55,48 @@ const ThemeSettings = ({ frontmatter }: { frontmatter: Frontmatter }) => {
 		<ColorInput label="text" value={colors.text || '#ffffff'} onChange={(v) => updateColor('text', v)} />
 		<ColorInput label="link" value={colors.link || '#ffffff'} onChange={(v) => updateColor('link', v)} />
 	</div>;
+}
+
+const SlideEditor = ({ source, slideIndex }: { source: string; slideIndex: number }) => {
+	const [value, setValue] = useState(source);
+	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	// Sync from external changes (e.g. SSE updates)
+	useEffect(() => {
+		setValue(source);
+	}, [source]);
+
+	const save = (newValue: string) => {
+		if (debounceRef.current) clearTimeout(debounceRef.current);
+		debounceRef.current = setTimeout(async () => {
+			await fetch('/doc', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify([
+					{ op: 'replace', path: `/sections/${slideIndex}/source`, value: newValue },
+				]),
+			});
+		}, 500);
+	};
+
+	const onChange = (newValue: string) => {
+		setValue(newValue);
+		save(newValue);
+	};
+
+	return <textarea
+		value={value}
+		onChange={(e) => onChange(e.target.value)}
+		style={{
+			width: '100%',
+			height: '200px',
+			fontFamily: 'monospace',
+			fontSize: '14px',
+			padding: '8px',
+			boxSizing: 'border-box',
+			resize: 'vertical',
+		}}
+	/>;
 }
 
 const AddSlideButton = ({ afterIndex }: { afterIndex: number }) => {
@@ -125,8 +168,11 @@ const HomePage = () => {
 				))
 			}
 			</div>
-			<div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '10px', padding: '10px', background: '#f0f0f0' }}>
-				<Slide style={{ width: '60vw', height: '60vh' }}>{doc.sections[currentSlide]?.source}</Slide>
+			<div style={{ flex: 1, display: 'flex', flexDirection: 'column', margin: '10px', minWidth: 0 }}>
+				<div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', background: '#f0f0f0' }}>
+					<Slide style={{ width: '60vw', height: '60vh' }}>{doc.sections[currentSlide]?.source}</Slide>
+				</div>
+				<SlideEditor source={doc.sections[currentSlide]?.source || ''} slideIndex={currentSlide} />
 			</div>
 		</div>
 		<div className={styles.container}>
