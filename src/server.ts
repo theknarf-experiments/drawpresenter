@@ -99,7 +99,7 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 		drawings: getDrawings(),
 		history: history ? {
 			pointer: history.pointer,
-			totalEntries: history.entries.length,
+			totalEntries: history?.entries?.length || 0,
 			entries: history.entries.map((entry, i) => ({
 				index: i,
 				active: i <= history!.pointer,
