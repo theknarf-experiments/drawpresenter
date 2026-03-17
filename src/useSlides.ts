@@ -1,5 +1,5 @@
 import { useReducer, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Document } from './document';
 
 export interface SlideActions {
@@ -13,10 +13,20 @@ interface UseSlidesConfig {
 }
 
 const useSlides = (config: UseSlidesConfig = {}): [number, SlideActions, Document | undefined, boolean, Error | null] => {
+	const queryClient = useQueryClient();
 	const { data: doc, isLoading, error } = useQuery({
 		queryKey: ['doc'],
 		queryFn: () => fetch('/doc').then(res => res.json()).then(data => data.doc)
 	});
+
+	// Listen to SSE for document changes
+	useEffect(() => {
+		const eventSource = new EventSource('/doc/events');
+		eventSource.onmessage = () => {
+			queryClient.invalidateQueries({ queryKey: ['doc'] });
+		};
+		return () => eventSource.close();
+	}, [queryClient]);
 
 	useEffect(() => {
 		if (doc?.frontmatter?.colors) {

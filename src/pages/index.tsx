@@ -4,7 +4,6 @@ import styles from '../app.module.css';
 import Slide from '../slide';
 import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
-import { useQueryClient } from '@tanstack/react-query';
 
 const Preview = ({ children }) => {
 	return <div style={{
@@ -24,15 +23,12 @@ const Preview = ({ children }) => {
 }
 
 const AddSlideButton = ({ afterIndex }: { afterIndex: number }) => {
-	const queryClient = useQueryClient();
-
 	const addSlide = async () => {
 		await fetch('/doc/add-slide', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ afterIndex }),
 		});
-		queryClient.invalidateQueries({ queryKey: ['doc'] });
 	};
 
 	return <button onClick={addSlide} style={{

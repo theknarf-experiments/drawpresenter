@@ -1,4 +1,5 @@
 import path from 'path';
+import { watch } from 'fs';
 import express, { Request, Response, NextFunction } from 'express';
 import { openDocument, addSlideAfter } from './document';
 
@@ -10,6 +11,40 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 	server.use('/files', express.static(projectPath));
 
 	server.use(express.json());
+
+	// SSE: track connected clients
+	const sseClients = new Set<Response>();
+
+	const notifyClients = () => {
+		for (const client of sseClients) {
+			client.write(`data: changed\n\n`);
+		}
+	};
+
+	// Watch the project file for external changes
+	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+	watch(path.resolve(projectFile), () => {
+		// Debounce to avoid rapid duplicate events
+		if (debounceTimer) clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(() => {
+			console.log('File changed, notifying clients');
+			notifyClients();
+		}, 100);
+	});
+
+	server.get('/doc/events', (req: Request, res: Response) => {
+		res.writeHead(200, {
+			'Content-Type': 'text/event-stream',
+			'Cache-Control': 'no-cache',
+			'Connection': 'keep-alive',
+		});
+		res.write('\n');
+
+		sseClients.add(res);
+		req.on('close', () => {
+			sseClients.delete(res);
+		});
+	});
 
 	server.get('/doc', async (req: Request, res: Response) => {
 		console.log(`/doc ${projectFile}`);
@@ -23,6 +58,7 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 		const doc = await addSlideAfter(projectFile, afterIndex);
 
 		res.json({ doc });
+		notifyClients();
 	});
 
 	if (dev) {
