@@ -5,8 +5,6 @@ import useKeybindings from '../useKeybindings';
 import styles from '../app.module.css';
 import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
-import { useBroadcast } from '../useBroadcast';
-
 // Shows a bar at the bottom of the presentation giving a hint on how far in the presentation you are
 const StatusIndicator = ({ doc, currentSlide }) => {
 	const max = doc.sections.length - 1;
@@ -52,14 +50,7 @@ const Timer = () => {
 }
 
 const Presenter = () => {
-	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides({ hashRouting: true });
-	const [ channel ] = useBroadcast('presenter');
-
-	useEffect(() => {
-		if(channel !== null) {
-			channel.postMessage(currentSlide);
-		}
-	}, [currentSlide]);
+	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides({ hashRouting: true, syncPresentation: true });
 
 	useKeybindings({
 		'ArrowRight': next,

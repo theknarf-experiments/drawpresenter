@@ -82,11 +82,15 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 		await writeFile(path.resolve(projectFile), content, 'utf-8');
 	};
 
+	// Presentation state
+	let presentationSlide = 0;
+
 	// SSE: track connected clients
 	const sseClients = new Set<Response>();
 
 	const getDocWithHistory = (doc: Document) => ({
 		...doc,
+		presentationSlide,
 		history: history ? {
 			pointer: history.pointer,
 			totalEntries: history.entries.length,
@@ -172,6 +176,15 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 	server.get('/doc', async (req: Request, res: Response) => {
 		const doc = history ? getCurrentDoc() : await initHistory();
 		res.json({ doc: getDocWithHistory(doc) });
+	});
+
+	server.post('/doc/slide', async (req: Request, res: Response) => {
+		const { slide } = req.body;
+		presentationSlide = slide;
+		const doc = history ? getCurrentDoc() : await initHistory();
+		// Notify without saving to file — this is ephemeral state
+		notifyClients(doc);
+		res.json({ ok: true });
 	});
 
 	server.post('/doc/add-slide', async (req: Request, res: Response) => {

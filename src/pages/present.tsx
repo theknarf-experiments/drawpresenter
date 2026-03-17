@@ -1,12 +1,9 @@
-import { useState, useEffect } from 'react';
 import Slide from '../slide';
 import useSlides from '../useSlides';
 import useKeybindings from '../useKeybindings';
 import styles from '../app.module.css';
 import CMDK from '../components/cmdk';
 import { Command } from 'cmdk';
-import { useBroadcast, useBroadcastListen } from '../useBroadcast';
-
 const openFullscreen = () => {
 	const elem = document.documentElement as any;
   if (elem.requestFullscreen) {
@@ -29,16 +26,10 @@ const StatusIndicator = ({ doc, currentSlide }) => {
 }
 
 const Present = () => {
-	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides({ hashRouting: true });
+	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides({ hashRouting: true, syncPresentation: true });
 	useKeybindings({
 		'ArrowRight': next,
 		'ArrowLeft': prev,
-	});
-	const [ channel ] = useBroadcast('presenter');
-	useBroadcastListen(channel, (e) => {
-		if(e.data !== null) {
-			goto(e.data)
-		};
 	});
 
 	const openOverview = () => {

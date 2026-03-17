@@ -10,6 +10,7 @@ export interface SlideActions {
 
 interface UseSlidesConfig {
   hashRouting?: boolean;
+  syncPresentation?: boolean;
 }
 
 const useSlides = (config: UseSlidesConfig = {}): [number, SlideActions, Document | undefined, boolean, Error | null] => {
@@ -60,12 +61,57 @@ const useSlides = (config: UseSlidesConfig = {}): [number, SlideActions, Documen
 		}
 	}, [config?.hashRouting, doc]);
 
+	// Sync presentation slide from server via SSE
+	useEffect(() => {
+		if (!config?.syncPresentation || !doc) return;
+		const serverSlide = (doc as any).presentationSlide;
+		if (typeof serverSlide === 'number' && serverSlide !== state) {
+			dispatch({ type: 'goto', value: serverSlide });
+		}
+	}, [config?.syncPresentation, (doc as any)?.presentationSlide]);
+
+	// Post slide changes to server when syncing
+	const syncedNext = () => {
+		const newSlide = clamp(state + 1, 0, max);
+		dispatch({ type: 'next' });
+		if (config?.syncPresentation) {
+			fetch('/doc/slide', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ slide: newSlide }),
+			});
+		}
+	};
+
+	const syncedPrev = () => {
+		const newSlide = clamp(state - 1, 0, max);
+		dispatch({ type: 'prev' });
+		if (config?.syncPresentation) {
+			fetch('/doc/slide', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ slide: newSlide }),
+			});
+		}
+	};
+
+	const syncedGoto = (value: number) => {
+		dispatch({ type: 'goto', value });
+		if (config?.syncPresentation) {
+			fetch('/doc/slide', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ slide: clamp(value, 0, max) }),
+			});
+		}
+	};
+
 	return [
 		state,
 		{
-			next: () => dispatch({ type: 'next' }),
-			prev: () => dispatch({ type: 'prev' }),
-			goto: (value) => dispatch({ type: 'goto', value }),
+			next: config?.syncPresentation ? syncedNext : () => dispatch({ type: 'next' }),
+			prev: config?.syncPresentation ? syncedPrev : () => dispatch({ type: 'prev' }),
+			goto: config?.syncPresentation ? syncedGoto : (value) => dispatch({ type: 'goto', value }),
 		},
 		doc,
 		isLoading,
