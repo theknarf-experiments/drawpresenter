@@ -1,11 +1,5 @@
 import { useState, useRef } from 'react';
-import getStroke from 'perfect-freehand';
-
-interface StrokeData {
-	points: number[][];
-	color: string;
-	size: number;
-}
+import { renderStrokePath, StrokeData } from './stroke-renderer';
 
 interface DrawingOverlayProps {
 	slideIndex: number;
@@ -13,25 +7,10 @@ interface DrawingOverlayProps {
 	enabled: boolean;
 	color?: string;
 	size?: number;
+	onStrokeComplete?: (stroke: number[][]) => void;
 }
 
-const getSvgPathFromStroke = (stroke: number[][]) => {
-	if (stroke.length === 0) return '';
-
-	const d = stroke.reduce(
-		(acc, [x0, y0], i, arr) => {
-			const [x1, y1] = arr[(i + 1) % arr.length];
-			acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
-			return acc;
-		},
-		['M', ...stroke[0], 'Q']
-	);
-
-	d.push('Z');
-	return d.join(' ');
-};
-
-const DrawingOverlay = ({ slideIndex, strokes = [], enabled, color = 'red', size = 2 }: DrawingOverlayProps) => {
+const DrawingOverlay = ({ slideIndex, strokes = [], enabled, color = 'red', size = 2, onStrokeComplete }: DrawingOverlayProps) => {
 	const svgRef = useRef<SVGSVGElement>(null);
 	const [currentStroke, setCurrentStroke] = useState<number[][] | null>(null);
 	const isDrawing = useRef(false);
@@ -59,23 +38,18 @@ const DrawingOverlay = ({ slideIndex, strokes = [], enabled, color = 'red', size
 		if (!isDrawing.current || !currentStroke) return;
 		isDrawing.current = false;
 
-		fetch('/doc/drawing', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ slide: slideIndex, stroke: currentStroke, color, size }),
-		});
+		if (onStrokeComplete) {
+			onStrokeComplete(currentStroke);
+		} else {
+			// Default: send to server for live drawing
+			fetch('/doc/drawing', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ slide: slideIndex, stroke: currentStroke, color, size }),
+			});
+		}
 
 		setCurrentStroke(null);
-	};
-
-	const renderStroke = (points: number[][], strokeColor: string, strokeSize: number, key: string) => {
-		const strokePoints = getStroke(points, {
-			size: strokeSize,
-			thinning: 0.5,
-			smoothing: 0.5,
-			streamline: 0.5,
-		});
-		return <path key={key} d={getSvgPathFromStroke(strokePoints)} fill={strokeColor} opacity={0.8} />;
 	};
 
 	return <svg
@@ -98,8 +72,8 @@ const DrawingOverlay = ({ slideIndex, strokes = [], enabled, color = 'red', size
 		onTouchStart={(e) => { if (enabled) e.preventDefault(); }}
 		onTouchMove={(e) => { if (enabled) e.preventDefault(); }}
 	>
-		{strokes.map((stroke, i) => renderStroke(stroke.points, stroke.color, stroke.size, `s-${i}`))}
-		{currentStroke && renderStroke(currentStroke, color, size, 'current')}
+		{strokes.map((stroke, i) => renderStrokePath(stroke.points, stroke.color, stroke.size, `s-${i}`))}
+		{currentStroke && renderStrokePath(currentStroke, color, size, 'current')}
 	</svg>;
 };
 

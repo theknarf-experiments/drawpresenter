@@ -6,6 +6,7 @@ import mermaid from 'mermaid';
 import confetti from 'canvas-confetti';
 import { Tweet } from "mdx-embed/dist/components/twitter";
 import useKeybindings from './useKeybindings';
+import Drawing from './components/drawing';
 import { evaluate } from '@mdx-js/mdx'
 import * as runtime from 'react/jsx-runtime'
 import { CornerImage } from './document';
@@ -83,6 +84,7 @@ const MDXComponents = {
 	img,
 	Tweet,
 	Reveal,
+	Drawing,
 };
 
 const InnerSlide = memo(({ children, components }: { children: string; components?: Record<string, any> }) => {

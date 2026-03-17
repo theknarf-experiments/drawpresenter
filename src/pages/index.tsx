@@ -9,6 +9,9 @@ import { Frontmatter } from '../document';
 import { Button, LinkButton } from '../components/button';
 import ContextMenu from '../components/context-menu';
 import FittedSlide from '../components/fitted-slide';
+import DrawingOverlay from '../components/drawing-overlay';
+import { StrokeData, renderStrokePath } from '../components/stroke-renderer';
+import Drawing from '../components/drawing';
 import { parseMarkdown, serializeMarkdown } from '../mdast-utils';
 
 const patchDoc = (operations: any[]) =>
@@ -295,8 +298,121 @@ const makeEditable = (tag: keyof JSX.IntrinsicElements, nodeType: string, nodeMa
 	);
 };
 
-const ScaledSlide = ({ children, slideIndex, fonts, cornerImage, selection, setSelection }: { children: string; slideIndex: number; fonts?: { heading?: string; body?: string }; cornerImage?: any; selection: Selection; setSelection: (s: Selection) => void }) => {
+const SelectableDrawing = ({ data, source, slideIndex, selection, setSelection }: {
+	data: string; source: string; slideIndex: number; selection: Selection; setSelection: (s: Selection) => void;
+}) => {
+	const elementId = `${slideIndex}:drawing:0`;
+	const isSelected = selection?.type === 'element' && selection.id === elementId;
+	const ref = useRef<HTMLDivElement>(null);
+
+	const handleClick = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		setSelection({ type: 'element', id: elementId });
+	};
+
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (!isSelected) return;
+		if (e.key === 'Backspace') {
+			e.preventDefault();
+			e.stopPropagation();
+			// Find and remove the <Drawing> from the source
+			const tree = parseMarkdown(source);
+			const node = walkTree(tree, (n: any) => n.type === 'mdxJsxFlowElement' && n.name === 'Drawing');
+			if (node) {
+				const start = node.node.position.start.offset;
+				const end = node.node.position.end.offset;
+				// Also remove surrounding newlines
+				const nextNode = node.parent?.children?.[node.index + 1];
+				const cleanEnd = nextNode ? nextNode.position.start.offset : end;
+				const newSource = source.slice(0, start) + source.slice(cleanEnd);
+				patchDoc([{ op: 'replace', path: `/sections/${slideIndex}/source`, value: newSource }]);
+			}
+			setSelection(null);
+		} else if ((e.metaKey || e.ctrlKey) && (e.key === 'c' || e.key === 'x')) {
+			e.preventDefault();
+			const tree = parseMarkdown(source);
+			const node = walkTree(tree, (n: any) => n.type === 'mdxJsxFlowElement' && n.name === 'Drawing');
+			if (node) {
+				const start = node.node.position.start.offset;
+				const end = node.node.position.end.offset;
+				navigator.clipboard.writeText(source.slice(start, end));
+				if (e.key === 'x') {
+					const nextNode = node.parent?.children?.[node.index + 1];
+					const cleanEnd = nextNode ? nextNode.position.start.offset : end;
+					const newSource = source.slice(0, start) + source.slice(cleanEnd);
+					patchDoc([{ op: 'replace', path: `/sections/${slideIndex}/source`, value: newSource }]);
+					setSelection(null);
+				}
+			}
+		} else if (e.key === 'Escape') {
+			setSelection(null);
+			ref.current?.blur();
+		}
+	};
+
+	useEffect(() => {
+		if (isSelected) {
+			ref.current?.focus();
+		}
+	}, [isSelected]);
+
+	let strokes: StrokeData[];
+	try { strokes = JSON.parse(data); } catch { strokes = []; }
+	const [hovered, setHovered] = useState(false);
+
+	const outlineColor = isSelected ? 'rgba(0, 102, 255, 0.3)' : hovered ? 'rgba(255, 255, 255, 0.2)' : 'none';
+
+	return <>
+		<svg
+			viewBox="0 0 100 100"
+			preserveAspectRatio="none"
+			style={{
+				position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+				zIndex: 5, pointerEvents: 'none',
+			}}
+		>
+			{strokes.map((stroke, i) => renderStrokePath(stroke.points, stroke.color, stroke.size, `d-${i}`))}
+			{outlineColor !== 'none' && strokes.map((stroke, i) =>
+				<polyline
+					key={`outline-${i}`}
+					points={stroke.points.map(p => `${p[0]},${p[1]}`).join(' ')}
+					fill="none"
+					stroke={outlineColor}
+					strokeWidth={stroke.size + 1}
+					strokeLinejoin="round"
+					strokeLinecap="round"
+				/>
+			)}
+			{strokes.map((stroke, i) =>
+				<polyline
+					key={`hit-${i}`}
+					points={stroke.points.map(p => `${p[0]},${p[1]}`).join(' ')}
+					fill="none"
+					stroke="transparent"
+					strokeWidth={Math.max(stroke.size * 4, 8)}
+					style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
+					onClick={handleClick}
+					onMouseEnter={() => setHovered(true)}
+					onMouseLeave={() => setHovered(false)}
+				/>
+			)}
+		</svg>
+		<div
+			ref={ref}
+			tabIndex={0}
+			onKeyDown={handleKeyDown}
+			style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}
+		/>
+	</>;
+};
+
+const ScaledSlide = ({ children, slideIndex, fonts, cornerImage, selection, setSelection, drawMode, drawColor, drawSize }: {
+	children: string; slideIndex: number; fonts?: { heading?: string; body?: string }; cornerImage?: any;
+	selection: Selection; setSelection: (s: Selection) => void;
+	drawMode?: boolean; drawColor?: string; drawSize?: number;
+}) => {
 	const counters = useRef<Map<string, number>>(new Map());
+	const [pendingStrokes, setPendingStrokes] = useState<StrokeData[]>([]);
 	counters.current.clear();
 
 	const withCounter = (Component: any) => (props: any) => {
@@ -307,23 +423,55 @@ const ScaledSlide = ({ children, slideIndex, fonts, cornerImage, selection, setS
 		return <Component {...props} source={children} slideIndex={slideIndex} selection={selection} setSelection={setSelection} occurrenceIndex={idx} />;
 	};
 
-	const editableComponents = Object.fromEntries(
-		[
-			['h1', makeEditable('h1', 'heading', (n: any) => n.type === 'heading' && n.depth === 1)],
-			['h2', makeEditable('h2', 'heading', (n: any) => n.type === 'heading' && n.depth === 2)],
-			['h3', makeEditable('h3', 'heading', (n: any) => n.type === 'heading' && n.depth === 3)],
-			['h4', makeEditable('h4', 'heading', (n: any) => n.type === 'heading' && n.depth === 4)],
-			['h5', makeEditable('h5', 'heading', (n: any) => n.type === 'heading' && n.depth === 5)],
-			['h6', makeEditable('h6', 'heading', (n: any) => n.type === 'heading' && n.depth === 6)],
-			['p', makeEditable('p', 'paragraph')],
-			['li', makeEditable('li', 'listItem')],
-		].map(([tag, Component]) => [
-			tag,
-			withCounter(Component),
-		])
-	);
+	const editableComponents = {
+		...Object.fromEntries(
+			[
+				['h1', makeEditable('h1', 'heading', (n: any) => n.type === 'heading' && n.depth === 1)],
+				['h2', makeEditable('h2', 'heading', (n: any) => n.type === 'heading' && n.depth === 2)],
+				['h3', makeEditable('h3', 'heading', (n: any) => n.type === 'heading' && n.depth === 3)],
+				['h4', makeEditable('h4', 'heading', (n: any) => n.type === 'heading' && n.depth === 4)],
+				['h5', makeEditable('h5', 'heading', (n: any) => n.type === 'heading' && n.depth === 5)],
+				['h6', makeEditable('h6', 'heading', (n: any) => n.type === 'heading' && n.depth === 6)],
+				['p', makeEditable('p', 'paragraph')],
+				['li', makeEditable('li', 'listItem')],
+			].map(([tag, Component]) => [
+				tag,
+				withCounter(Component),
+			])
+		),
+		Drawing: (props: any) => <SelectableDrawing {...props} source={children} slideIndex={slideIndex} selection={selection} setSelection={setSelection} />,
+	};
 
-	return <FittedSlide fonts={fonts} cornerImage={cornerImage} components={editableComponents}>{children}</FittedSlide>;
+	const handleStrokeComplete = (points: number[][]) => {
+		const stroke: StrokeData = { points, color: drawColor || 'red', size: drawSize || 2 };
+		const newStrokes = [...pendingStrokes, stroke];
+		setPendingStrokes(newStrokes);
+
+		// Update the markdown with a <Drawing> component
+		const dataJson = JSON.stringify(newStrokes);
+		const drawingTag = `<Drawing data='${dataJson}' />`;
+
+		// Check if there's already a <Drawing> in the source and replace it
+		const drawingRegex = /<Drawing\s+data='[^']*'\s*\/>/;
+		let newSource: string;
+		if (drawingRegex.test(children)) {
+			newSource = children.replace(drawingRegex, drawingTag);
+		} else {
+			newSource = children.trimEnd() + `\n\n${drawingTag}\n\n`;
+		}
+		patchDoc([{ op: 'replace', path: `/sections/${slideIndex}/source`, value: newSource }]);
+	};
+
+	const overlay = drawMode ? <DrawingOverlay
+		slideIndex={slideIndex}
+		strokes={pendingStrokes}
+		enabled={true}
+		color={drawColor}
+		size={drawSize}
+		onStrokeComplete={handleStrokeComplete}
+	/> : undefined;
+
+	return <FittedSlide fonts={fonts} cornerImage={cornerImage} components={editableComponents} overlay={overlay}>{children}</FittedSlide>;
 }
 
 const HistoryPanel = ({ history }: { history: any }) => {
@@ -368,6 +516,9 @@ const HomePage = () => {
 	const [ currentSlide, { next, prev, goto }, doc, isLoading, error ] = useSlides();
 	const [selection, setSelection] = useState<Selection>(null);
 	const [showHistory, setShowHistory] = useState(false);
+	const [drawMode, setDrawMode] = useState(false);
+	const [drawColor, setDrawColor] = useState('#ff4444');
+	const [drawSize, setDrawSize] = useState(2);
 
 	const slideSelected = selection?.type === 'slide' && selection.index === currentSlide;
 	const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -523,6 +674,7 @@ const HomePage = () => {
 				<LinkButton href="/print">Open for print</LinkButton>
 				<Button onClick={() => fetch('/doc/undo', { method: 'POST' })}>Undo</Button>
 				<Button onClick={() => fetch('/doc/redo', { method: 'POST' })}>Redo</Button>
+				<Button onClick={() => { setDrawMode(d => !d); if (drawMode) setSelection(null); }}>{drawMode ? 'Stop drawing' : 'Draw'}</Button>
 				<Button onClick={() => setShowHistory(h => !h)}>History</Button>
 			</div>
 			<ThemeSettings frontmatter={doc.frontmatter} />
@@ -569,8 +721,51 @@ const HomePage = () => {
 			</div>
 			<div className={styles.previewArea}>
 				<div className={styles.previewPane}>
-					<ScaledSlide slideIndex={currentSlide} fonts={doc.frontmatter.fonts} cornerImage={doc.frontmatter.cornerImage} selection={selection} setSelection={setSelection}>{doc.sections[currentSlide]?.source}</ScaledSlide>
+					<ScaledSlide slideIndex={currentSlide} fonts={doc.frontmatter.fonts} cornerImage={doc.frontmatter.cornerImage} selection={selection} setSelection={setSelection} drawMode={drawMode} drawColor={drawColor} drawSize={drawSize}>{doc.sections[currentSlide]?.source}</ScaledSlide>
 				</div>
+				{drawMode && <div style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: '0.5em',
+					padding: '8px 12px',
+					background: '#f5f5f5',
+					borderBottom: '1px solid #ddd',
+				}}>
+					{[
+						{ name: 'Red', value: '#ff4444' },
+						{ name: 'Blue', value: '#4488ff' },
+						{ name: 'Green', value: '#44cc44' },
+						{ name: 'Yellow', value: '#ffcc00' },
+						{ name: 'Black', value: '#000000' },
+						{ name: 'Orange', value: '#ff8800' },
+					].map(c => (
+						<button
+							key={c.value}
+							onClick={() => setDrawColor(c.value)}
+							title={c.name}
+							style={{
+								width: 28, height: 28,
+								borderRadius: '50%',
+								background: c.value,
+								border: drawColor === c.value ? '3px solid #0066ff' : '2px solid #ccc',
+								cursor: 'pointer',
+								boxShadow: drawColor === c.value ? '0 0 4px rgba(0,102,255,0.4)' : 'none',
+							}}
+						/>
+					))}
+					<input
+						type="range"
+						min={1}
+						max={8}
+						step={0.5}
+						value={drawSize}
+						onChange={(e) => setDrawSize(Number(e.target.value))}
+						style={{ width: '80px', marginLeft: '8px' }}
+					/>
+					<svg width="24" height="24" viewBox="0 0 24 24">
+						<circle cx="12" cy="12" r={drawSize * 1.5} fill={drawColor} opacity={0.8} />
+					</svg>
+				</div>}
 				<SlideEditor source={doc.sections[currentSlide]?.source || ''} slideIndex={currentSlide} />
 			</div>
 			{showHistory && <HistoryPanel history={(doc as any).history} />}
