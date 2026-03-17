@@ -299,6 +299,8 @@ const HistoryPanel = ({ history }: { history: any }) => {
 		return ops.map(op => `${op.op} ${op.path}`).join(', ');
 	};
 
+	const sourceIcon = (source: string) => source === 'file' ? '[file]' : '[user]';
+
 	return <div className={styles.historyPanel}>
 		<div style={{ padding: '8px', fontWeight: 'bold', borderBottom: '1px solid #ccc' }}>
 			Edit History (pointer: {history.pointer})
@@ -306,21 +308,21 @@ const HistoryPanel = ({ history }: { history: any }) => {
 		<div style={{ padding: '4px', borderBottom: '1px solid #ccc', fontStyle: 'italic', opacity: history.pointer === -1 ? 1 : 0.4 }}>
 			Base document {history.pointer === -1 && ' ←'}
 		</div>
-		{history.patches.map((patch: any) => (
-			<div key={patch.index} style={{
+		{history.entries.map((entry: any) => (
+			<div key={entry.index} style={{
 				padding: '6px 8px',
 				fontSize: '12px',
 				fontFamily: 'monospace',
 				borderBottom: '1px solid #eee',
-				opacity: patch.active ? 1 : 0.4,
-				background: patch.index === history.pointer ? '#e6f0ff' : 'transparent',
+				opacity: entry.active ? 1 : 0.4,
+				background: entry.index === history.pointer ? '#e6f0ff' : 'transparent',
 			}}>
-				<span>{patch.index}: </span>
-				<span>{opSummary(patch.operations)}</span>
-				{patch.index === history.pointer && <span> ←</span>}
+				<span>{entry.index} {sourceIcon(entry.source)}: </span>
+				<span>{opSummary(entry.operations)}</span>
+				{entry.index === history.pointer && <span> ←</span>}
 			</div>
 		))}
-		{history.totalPatches === 0 && <div style={{ padding: '8px', opacity: 0.5 }}>No edits yet</div>}
+		{history.totalEntries === 0 && <div style={{ padding: '8px', opacity: 0.5 }}>No edits yet</div>}
 	</div>;
 };
 

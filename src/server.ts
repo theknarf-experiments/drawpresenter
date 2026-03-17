@@ -6,10 +6,15 @@ import express, { Request, Response, NextFunction } from 'express';
 import { openDocument, addSlideAfter, updateFrontmatter, patchDocument, applyPatchToDoc, serialize, Document, Section } from './document';
 import { Operation } from 'fast-json-patch';
 
+interface HistoryEntry {
+	operations: Operation[];
+	source: 'user' | 'file';
+}
+
 interface EditHistory {
 	baseDoc: Document;
-	patches: Operation[][];
-	pointer: number; // index of the last applied patch (-1 = at base)
+	entries: HistoryEntry[];
+	pointer: number; // index of the last applied entry (-1 = at base)
 }
 
 const start = async (projectFile: string, dev: boolean = false, hostname: string = 'localhost', port: number = 3000): Promise<void> => {
@@ -27,7 +32,7 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 		if (!history) throw new Error('No document loaded');
 		let doc = history.baseDoc;
 		for (let i = 0; i <= history.pointer; i++) {
-			doc = applyPatchToDoc(doc, history.patches[i]);
+			doc = applyPatchToDoc(doc, history.entries[i].operations);
 		}
 		return doc;
 	};
@@ -49,16 +54,16 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 				return s;
 			});
 		}
-		history = { baseDoc: doc, patches: [], pointer: -1 };
+		history = { baseDoc: doc, entries: [], pointer: -1 };
 		return doc;
 	};
 
-	const applyAndRecord = async (operations: Operation[]): Promise<Document> => {
+	const applyAndRecord = async (operations: Operation[], source: 'user' | 'file' = 'user'): Promise<Document> => {
 		if (!history) await initHistory();
 
 		// Truncate any redo history
-		history!.patches = history!.patches.slice(0, history!.pointer + 1);
-		history!.patches.push(operations);
+		history!.entries = history!.entries.slice(0, history!.pointer + 1);
+		history!.entries.push({ operations, source });
 		history!.pointer++;
 
 		const doc = getCurrentDoc();
@@ -84,13 +89,14 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 		...doc,
 		history: history ? {
 			pointer: history.pointer,
-			totalPatches: history.patches.length,
-			patches: history.patches.map((ops, i) => ({
+			totalEntries: history.entries.length,
+			entries: history.entries.map((entry, i) => ({
 				index: i,
 				active: i <= history!.pointer,
-				operations: ops,
+				source: entry.source,
+				operations: entry.operations,
 			})),
-		} : { pointer: -1, totalPatches: 0, patches: [] },
+		} : { pointer: -1, totalEntries: 0, entries: [] },
 	});
 
 	const notifyClients = (doc: Document) => {
@@ -141,8 +147,8 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 			];
 
 			// Truncate redo history
-			history.patches = history.patches.slice(0, history.pointer + 1);
-			history.patches.push(operations);
+			history.entries = history.entries.slice(0, history.pointer + 1);
+			history.entries.push({ operations, source: 'file' });
 			history.pointer++;
 
 			notifyClients(getCurrentDoc());
@@ -213,7 +219,7 @@ const start = async (projectFile: string, dev: boolean = false, hostname: string
 	});
 
 	server.post('/doc/redo', async (req: Request, res: Response) => {
-		if (!history || history.pointer >= history.patches.length - 1) {
+		if (!history || history.pointer >= history.entries.length - 1) {
 			const doc = history ? getCurrentDoc() : await initHistory();
 			res.json({ doc: getDocWithHistory(doc) });
 			return;
